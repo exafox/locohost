@@ -1,0 +1,76 @@
+---
+- name: Provision a development environment locally
+  hosts: localhost
+  sudo: true
+
+  tasks:
+
+    - name: Get aptitude for upgrade
+      apt: pkg=aptitude state=present
+
+    - name: Safe system upgrade via aptitude
+      apt: upgrade=safe
+
+    - name: Add postgres 9.4 sources
+      apt_repository: repo='deb http://apt.postgresql.org/pub/repos/apt/ {{ansible_local.main.ubuntu.release}}-pgdg main' state=present update_cache=yes validate_certs=yes
+
+    - name: Add postgres apt-key
+      apt_key: url=https://www.postgresql.org/media/keys/ACCC4CF8.asc state=present
+
+    - name: install kitchen sink
+      apt: pkg={{item}} state=present update_cache=yes cache_valid_time=1000
+      with_items:
+        - sysstat
+        - git
+        - subversion
+        - mercurial
+        - virtualbox
+        - vagrant
+        - sublime-text
+        - python-dev
+        - inkscape
+        - ruby-dev
+        - sqlite
+        - pgadmin3
+        - postgresql-9.4
+        - postgresql-client-9.4
+        - libpq-dev
+        - python-psycopg2
+        - pandoc
+        - filezilla
+        - keepassx
+        - wireshark
+        - golang
+        - build-essential
+        - python-software-properties
+
+
+    # Java things
+    - name: Add Java repository to sources
+      #This fails from mint, see: https://github.com/ansible/ansible/issues/4587
+      #apt_repository: repo=ppa:webupd8team/java update_cache=yes
+      shell: apt-add-repository ppa:webupd8team/java -y
+
+    - name: Autoaccept license for Java
+      debconf: name='oracle-java7-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+
+    - name: Install Java 7
+      apt: pkg=oracle-java7-installer state=latest install_recommends=yes update_cache=yes 
+
+    - name: Set Java 7 Env
+      apt: pkg=oracle-java7-set-default state=latest install_recommends=yes update_cache=yes 
+
+    - name: grab build dependencies for numpy and scipy
+      command: apt-get -y build-dep python-scipy
+
+    - name: Install global python requirements with pip
+      pip: name={{item}} state=present
+      with_items:
+        - pandas
+        - scipy
+        - ipython
+        - ipdb
+        - scikit-learn
+        - ggplot
+        - fabric
+
