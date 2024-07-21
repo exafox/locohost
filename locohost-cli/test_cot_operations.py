@@ -1,7 +1,7 @@
 import unittest
 import os
 import shutil
-from locohost import _create_cot, _update_cot, _compress_cot
+from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot
 
 class TestCoTOperations(unittest.TestCase):
     def setUp(self):
