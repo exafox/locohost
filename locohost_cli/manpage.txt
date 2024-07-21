@@ -63,40 +63,6 @@ ACTIONS
             --project-name  Name of the project
             --diff-file     Path to the diff file
 
-    review_and_refactor
-        Improve code quality while maintaining existing functionality.
-        Options:
-            --project-name  Name of the project
-
-    generate_performance_tests
-        Create tests to measure and ensure application performance.
-        Options:
-            --project-name  Name of the project
-
-    upgrade_dependencies
-        Safely update project dependencies to their latest compatible versions.
-        Options:
-            --project-name  Name of the project
-
-    bootstrap_database_migrations
-        Set up and manage database schema changes for PostgreSQL.
-        Options:
-            --project-name  Name of the project
-
-    generate_docs_snapshot
-        Automatically create or update project documentation.
-        Options:
-            --project-name  Name of the project
-
-    generate_or_update_local_deployment
-        Configure or update the local development environment.
-        Options:
-            --project-name  Name of the project
-
-    generate_or_update_production_deployment
-        Prepare or update Kubernetes configurations for production deployment.
-        Options:
-            --project-name  Name of the project
 
     review_and_refactor
         Improve code quality while maintaining existing functionality.
