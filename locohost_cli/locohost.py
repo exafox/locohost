@@ -4,27 +4,14 @@ import json
 import os
 from datetime import datetime
 from pydantic import BaseModel
-import instructor
 from anthropic import Anthropic
-from pydantic import BaseModel
-
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Initialize the client once at the module level
-client = instructor.patch(Anthropic())
-logger.debug(f"Instructor-patched Anthropic client initialized: {client}")
-
-class SnapshotData(BaseModel):
-    """
-    A model to represent snapshot data.
-    """
-    file_text: str
-    commit_message: str
-    changelog: str
-
-# The @llm_validator decorator is not needed when using Instructor
+# Initialize the Anthropic client once at the module level
+client = Anthropic()
+logger.debug(f"Anthropic client initialized: {client}")
 
 # ========================
 # Helper Functions
@@ -166,16 +153,23 @@ def _compress_cot(project_name, context_dir=None):
     Provide the compressed result in Markdown format, which may include JSON when appropriate.
     
     After compressing the content, please generate a concise and informative commit message that summarizes the key updates or changes made in this compression.
+    
+    Format your response as follows:
+    [COMPRESSED_CONTENT]
+    (Your compressed content here)
+    [/COMPRESSED_CONTENT]
+    
+    [COMMIT_MESSAGE]
+    (Your commit message here)
+    [/COMMIT_MESSAGE]
     """
 
-    logger.info("Sending request to Anthropic API using instructor")
+    logger.info("Sending request to Anthropic API")
     try:
-        response = client.chat.completions.create(
+        response = client.completions.create(
             model="claude-3-5-sonnet-20240620",
-            response_model=SnapshotData,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            max_tokens_to_sample=3000,
+            prompt=prompt
         )
         logger.debug(f"Received response from Anthropic API")
     except Exception as e:
@@ -183,8 +177,12 @@ def _compress_cot(project_name, context_dir=None):
         logger.exception("Detailed error information:")
         return
 
-    compressed_content = response.file_text
-    commit_message = response.commit_message
+    response_content = response.completion
+
+    # Extract compressed content and commit message from the response
+    compressed_content = response_content.split("[COMPRESSED_CONTENT]")[1].split("[/COMPRESSED_CONTENT]")[0].strip()
+    commit_message = response_content.split("[COMMIT_MESSAGE]")[1].split("[/COMMIT_MESSAGE]")[0].strip()
+
     logger.debug(f"Compressed content length: {len(compressed_content)} characters")
     logger.debug(f"Commit message: {commit_message}")
 
@@ -398,18 +396,41 @@ def main():
     elif args.action == "generate_or_update_production_deployment":
         generate_or_update_production_deployment(args.project_name)
 
-def get_snapshot_data(context: str) -> SnapshotData:
-    return client.chat.completions.create(
+def get_snapshot_data(context: str) -> dict:
+    prompt = f"""Generate snapshot data based on this context: {context}
+    
+    Format your response as follows:
+    [FILE_TEXT]
+    (Your file text here)
+    [/FILE_TEXT]
+    
+    [COMMIT_MESSAGE]
+    (Your commit message here)
+    [/COMMIT_MESSAGE]
+    
+    [CHANGELOG]
+    (Your changelog here)
+    [/CHANGELOG]
+    """
+
+    response = client.completions.create(
         model="claude-3-5-sonnet-20240620",
-        max_tokens=1000,
-        messages=[
-            {
-                "role": "user",
-                "content": f"Generate snapshot data based on this context: {context}",
-            }
-        ],
-        response_model=SnapshotData,
+        max_tokens_to_sample=1000,
+        prompt=prompt
     )
+
+    response_content = response.completion
+
+    # Extract data from the response
+    file_text = response_content.split("[FILE_TEXT]")[1].split("[/FILE_TEXT]")[0].strip()
+    commit_message = response_content.split("[COMMIT_MESSAGE]")[1].split("[/COMMIT_MESSAGE]")[0].strip()
+    changelog = response_content.split("[CHANGELOG]")[1].split("[/CHANGELOG]")[0].strip()
+
+    return {
+        "file_text": file_text,
+        "commit_message": commit_message,
+        "changelog": changelog
+    }
 
 def _get_context_dir(project_name, context_dir=None):
     if context_dir is None:
