@@ -93,9 +93,59 @@ def _update_cot(project_name, context, format='md'):
     except IOError as e:
         logger.error(f"Error updating CoT file: {e}")
 
+import subprocess
+import anthropic
+
 def _compress_cot(project_name):
-    logger.info(f"[NO-OP] Executing _compress_cot with project_name: {project_name}")
-    pass
+    project_dir = os.path.join(os.getcwd(), project_name)
+    context_dir = os.path.join(project_dir, '.context')
+    snapshot_file = os.path.join(context_dir, 'snapshot.md')
+
+    # 1. Read the current snapshot file
+    current_snapshot = ""
+    if os.path.exists(snapshot_file):
+        with open(snapshot_file, 'r') as f:
+            current_snapshot = f.read()
+
+    # 2. Run git diff and parse out changes in .context directory
+    git_diff_command = f"git diff -- {context_dir}"
+    git_diff_output = subprocess.check_output(git_diff_command, shell=True, text=True)
+
+    # 3. Send data to Anthropic for compression
+    client = anthropic.Anthropic()
+    prompt = f"""
+    Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
+    Remove old or outdated information, but take great care not to lose any important signals.
+    
+    Current snapshot:
+    {current_snapshot}
+    
+    Git diff of changes:
+    {git_diff_output}
+    
+    Provide the compressed result in Markdown format, which may include JSON when appropriate.
+    """
+
+    response = client.completions.create(
+        model="claude-2",
+        prompt=prompt,
+        max_tokens_to_sample=100000,
+    )
+
+    compressed_content = response.completion
+
+    # 4. Write the response to the new snapshot file
+    with open(snapshot_file, 'w') as f:
+        f.write(compressed_content)
+
+    # 5. Commit the changes to git
+    git_add_command = f"git add {snapshot_file}"
+    git_commit_command = f"git commit -m 'Update CoT snapshot'"
+    
+    subprocess.run(git_add_command, shell=True, check=True)
+    subprocess.run(git_commit_command, shell=True, check=True)
+
+    logger.info(f"CoT snapshot compressed and updated for project: {project_name}")
 
 # ========================
 # Entrypoint Functions
