@@ -222,6 +222,8 @@ def _compress_cot(project_name, context_dir=None):
     logger.info(f"CoT snapshot compressed and updated for project: {project_name}")
     logger.info(f"Commit message: {commit_message}")
 
+    return snapshot_file
+
 # ========================
 # Entrypoint Functions
 # ========================
