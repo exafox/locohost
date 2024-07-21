@@ -168,10 +168,10 @@ def _compress_cot(project_name, context_dir=None):
     After compressing the content, please generate a concise and informative commit message that summarizes the key updates or changes made in this compression.
     """
 
-    logger.debug("Sending request to Anthropic API using instructor")
+    logger.info("Sending request to Anthropic API using instructor")
     try:
         response = client.chat.completions.create(
-            model="claude-3-opus-20240229",
+            model="	claude-3-5-sonnet-20240620",
             response_model=SnapshotData,
             messages=[
                 {"role": "user", "content": prompt}
@@ -400,7 +400,7 @@ def main():
 
 def get_snapshot_data(context: str) -> SnapshotData:
     response = client.chat.completions.create(
-        model="claude-3-opus-20240229",
+        model="	claude-3-5-sonnet-20240620",
         max_tokens=1000,
         messages=[
             {
