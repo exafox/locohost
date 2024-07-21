@@ -329,8 +329,6 @@ def main():
         generate_new_project_code(args.project_name, args.language)
     elif args.action == "edit_project_code":
         edit_project_code(args.project_name, args.file_path)
-    elif args.action == "edit_project_code":
-        edit_project_code(args.project_name, args.file_path)
     elif args.action == "generate_tests_for_diff":
         generate_tests_for_diff(args.project_name, args.diff_file)
     elif args.action == "review_and_refactor":
