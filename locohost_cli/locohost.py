@@ -21,6 +21,15 @@ class SnapshotData(BaseModel):
     commit_message: str
     changelog: str
 
+    @classmethod
+    def validate_model(cls, client, statement):
+        response = client.completions.create(
+            model="claude-2",
+            prompt=f"{statement}\n\n{cls.schema_json()}",
+            max_tokens_to_sample=1000,
+        )
+        return response.completion
+
 # ========================
 # Helper Functions
 # ========================
