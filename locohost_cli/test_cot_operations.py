@@ -2,6 +2,7 @@ import pytest
 import os
 import logging
 import sys
+import subprocess
 from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot
 
 # Configure logging to display messages during test execution
@@ -27,6 +28,10 @@ def project_setup(tmp_path):
     project_dir = tmp_path
     context_dir = project_dir / '.context'
     context_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Initialize git repository
+    import subprocess
+    subprocess.run(["git", "init"], cwd=str(project_dir), check=True)
     
     yield project_name, str(project_dir), str(context_dir)
     
