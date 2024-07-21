@@ -5,16 +5,17 @@ import os
 from datetime import datetime
 from pydantic import BaseModel
 from instructor import llm_validator
-import anthropic
+import instructor
+from anthropic import Anthropic
 
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-client = anthropic.Anthropic()
-logger.debug(f"Anthropic client initialized: {client}")
+anthropic_client = Anthropic()
+client = instructor.from_anthropic(anthropic_client)
+logger.debug(f"Instructor-wrapped Anthropic client initialized: {client}")
 
-@llm_validator(client=client, statement="Validate the SnapshotData model")
 class SnapshotData(BaseModel):
     """
     A model to represent snapshot data.
@@ -23,14 +24,7 @@ class SnapshotData(BaseModel):
     commit_message: str
     changelog: str
 
-    @classmethod
-    def validate_model(cls, client, statement):
-        response = client.completions.create(
-            model="claude-2",
-            prompt=f"{statement}\n\n{cls.schema_json()}",
-            max_tokens_to_sample=1000,
-        )
-        return response.completion
+# The @llm_validator decorator is not needed when using Instructor
 
 # ========================
 # Helper Functions
@@ -425,3 +419,22 @@ def main():
 
 if __name__ == "__main__":
     main()
+def get_snapshot_data(context: str) -> SnapshotData:
+    response = client.messages.create(
+        model="claude-3-opus-20240229",
+        max_tokens=1000,
+        messages=[
+            {
+                "role": "user",
+                "content": f"Generate snapshot data based on this context: {context}",
+            }
+        ],
+        response_model=SnapshotData,
+    )
+    return response
+
+# Example usage
+# snapshot = get_snapshot_data("Some context about the project")
+# print(snapshot.file_text)
+# print(snapshot.commit_message)
+# print(snapshot.changelog)
