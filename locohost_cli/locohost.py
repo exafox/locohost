@@ -3,7 +3,6 @@ import logging
 import json
 import os
 from datetime import datetime
-from pydantic import BaseModel
 from anthropic import Anthropic
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
