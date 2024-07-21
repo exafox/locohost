@@ -1,0 +1,148 @@
+NAME
+    locohost.py - AI-assisted project management and development tool for Kubernetes-based applications
+
+SYNOPSIS
+    locohost.py <action> [options]
+
+DESCRIPTION
+    locohost.py is a comprehensive AI-assisted tool for managing software projects from inception to deployment,
+    with a focus on Kubernetes-based applications using PostgreSQL. It supports project creation,
+    Chain of Thought (CoT) journaling, git operations, testing, deployment, code editing, and test generation.
+    The tool uses Aider for processing and generating content, and Anthropic for gathering information.
+
+ACTIONS
+    create_prd
+        Create a Product Requirements Document using Amazon's "Working Backwards" method.
+        Queries Anthropic for information and creates a REPL with the user.
+        Options:
+            --project-context-file  Path to the project context file
+
+    edit_prd
+        Edit an existing Product Requirements Document.
+        Queries Anthropic for information and creates a REPL with the user.
+        Options:
+            --project-name  Name of the project
+            --prd-file      Path to the PRD file to edit
+
+    start_project
+        Initialize a new project with CoT journaling.
+        Options:
+            --project-name  Name of the project
+
+    git_push
+        Analyze git status and create a commit message.
+        Options:
+            --project-name    Name of the project
+            --commit-message  Commit message
+
+    run_tests
+        Analyze test results for the project.
+        Options:
+            --project-name  Name of the project
+
+    deploy
+        Analyze deployment information for the project.
+        Options:
+            --project-name  Name of the project
+
+    generate_new_project_code
+        Generate initial code for a new project based on requirements.
+        Options:
+            --project-name  Name of the project
+            --language      Programming language to use (Python, Go, or TypeScript)
+
+    edit_project_code
+        Edit existing project code with AI assistance.
+        Options:
+            --project-name  Name of the project
+            --file-path     Path to the file to edit
+
+    generate_tests_for_diff
+        Generate tests for a specific diff using Aider.
+        Options:
+            --project-name  Name of the project
+            --diff-file     Path to the diff file
+
+
+    review_and_refactor
+        Improve code quality while maintaining existing functionality.
+        Options:
+            --project-name  Name of the project
+
+    generate_performance_tests
+        Create tests to measure and ensure application performance.
+        Options:
+            --project-name  Name of the project
+
+    upgrade_dependencies
+        Safely update project dependencies to their latest compatible versions.
+        Options:
+            --project-name  Name of the project
+
+    bootstrap_database_migrations
+        Set up and manage database schema changes for PostgreSQL.
+        Options:
+            --project-name  Name of the project
+
+    generate_docs_snapshot
+        Automatically create or update project documentation.
+        Options:
+            --project-name  Name of the project
+
+    generate_or_update_local_deployment
+        Configure or update the local development environment.
+        Options:
+            --project-name  Name of the project
+
+    generate_or_update_production_deployment
+        Prepare or update Kubernetes configurations for production deployment.
+        Options:
+            --project-name  Name of the project
+
+OPTIONS
+    --project-name          Name of the project (required for most actions)
+    --project-context-file  Path to the project context file (for create_prd)
+    --commit-message        Commit message (for git_push)
+    --language              Programming language (for generate_new_project_code)
+    --prd-file              Path to the PRD file to edit (for edit_prd)
+    --file-path             Path to the file to edit (for edit_project_code)
+    --diff-file             Path to the diff file (for generate_tests_for_diff)
+
+NOTES
+    - This tool leverages AI for enhanced productivity and insight throughout the development lifecycle.
+    - Aider is used for processing and generating content, including code, tests, and documentation.
+    - Anthropic is used exclusively for gathering information to support decision-making.
+    - The tool provides AI-assisted analysis for git operations, test results, and deployment processes.
+    - When creating or editing PRDs, the tool uses Amazon's "Working Backwards" method, starting with a press release and FAQ.
+    - The Chain of Thought (CoT) journaling feature provides a continuous record of project decisions and rationale.
+    - CoT entries are automatically created, updated, and compressed as needed during various operations.
+    - Code generation and editing tasks are AI-assisted, supporting multiple languages (Python, Go, TypeScript).
+    - The tool focuses on Kubernetes-based applications using PostgreSQL, with specific features for database management and deployment.
+    - AI-assisted code review and refactoring help maintain code quality without changing functionality.
+    - Performance testing, dependency management, and documentation generation are automated with AI support.
+    - The tool facilitates both local development and production deployment, with AI-guided configuration management.
+    - While AI-assisted, the tool does not directly execute git, test, or deployment operations, but provides analysis and recommendations.
+    - The generate_tests_for_diff command uses Aider to analyze a diff and generate appropriate tests.
+
+EXAMPLES
+    locohost.py create_prd --project-context-file project_context.txt
+    locohost.py edit_prd --project-name MyProject --prd-file MyProject_PRD.md
+    locohost.py start_project --project-name MyProject
+    locohost.py deploy --project-name MyProject
+    locohost.py generate_new_project_code --project-name MyProject --language Python
+    locohost.py edit_project_code --project-name MyProject --file-path src/main.py
+    locohost.py generate_tests_for_diff --project-name MyProject --diff-file changes.diff
+    locohost.py review_and_refactor --project-name MyProject
+    locohost.py generate_performance_tests --project-name MyProject
+    locohost.py generate_or_update_production_deployment --project-name MyProject
+    locohost.py review_and_refactor --project-name MyProject
+    locohost.py generate_performance_tests --project-name MyProject
+    locohost.py generate_or_update_production_deployment --project-name MyProject
+
+AUTHOR
+    Written by Your Name
+
+REPORTING BUGS
+    Report bugs to Your GitHub Username
+COPYRIGHT
+    Copyright © 2023 Stefan Fox.
