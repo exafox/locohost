@@ -135,7 +135,7 @@ import anthropic
 def _compress_cot(project_name):
     logger.debug(f"Compressing CoT for project: {project_name}")
     project_dir = os.getcwd()
-    context_dir = os.path.join(project_dir, project_name, '.context')
+    context_dir = os.path.join(project_dir, '.context')
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
     logger.debug(f"Project directory: {project_dir}")
     logger.debug(f"Context directory: {context_dir}")
@@ -150,28 +150,24 @@ def _compress_cot(project_name):
     else:
         logger.debug("No existing snapshot file found")
 
-    # 2. Run git diff and parse out changes in .context directory
-    git_diff_command = f"git diff -- {context_dir}"
-    logger.debug(f"Running git diff command: {git_diff_command}")
-    try:
-        git_diff_output = subprocess.check_output(git_diff_command, shell=True, text=True)
-        logger.debug(f"Git diff output length: {len(git_diff_output)} characters")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error running git diff: {e}")
-        logger.exception("Detailed error information:")
-        return
+    # 2. Read all CoT files
+    cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
+    cot_content = ""
+    for cot_file in cot_files:
+        with open(os.path.join(context_dir, cot_file), 'r') as f:
+            cot_content += f.read() + "\n\n"
+    logger.debug(f"CoT content length: {len(cot_content)} characters")
 
     # 3. Send data to Anthropic for compression and commit message generation
     client = anthropic.Anthropic()
-    prompt = f"""
-    Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
+    prompt = f"""Human: Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
     Remove old or outdated information, but take great care not to lose any important signals.
     
     Current snapshot:
     {current_snapshot}
     
-    Git diff of changes:
-    {git_diff_output}
+    CoT content:
+    {cot_content}
     
     Provide the compressed result in Markdown format, which may include JSON when appropriate.
     
