@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # Helper Functions
 # ========================
 
-def _create_cot(project_name, format='md'):
+def _create_cot(project_name, context, format='md'):
     project_dir = os.path.join(os.getcwd(), project_name)
     context_dir = os.path.join(project_dir, '.context')
 
@@ -31,31 +31,67 @@ def _create_cot(project_name, format='md'):
     
     try:
         if format == 'md':
-            initial_entry = f"# Chain of Thought Entry {next_number}\n\n"
-            initial_entry += f"Created: {timestamp}\n\n"
-            initial_entry += f"Project: {project_name}\n\n"
-            initial_entry += "## Initial Entry\n\n"
-            initial_entry += f"Chain of Thought initialized for project: {project_name}\n"
+            content = f"# Chain of Thought Entry {next_number}\n\n"
+            content += f"Created: {timestamp}\n\n"
+            content += f"Project: {project_name}\n\n"
+            content += "## Entry\n\n"
+            content += context
         elif format == 'json':
-            initial_entry = json.dumps({
+            content = json.dumps({
                 "entry_number": next_number,
                 "created": timestamp,
                 "project": project_name,
-                "content": f"Chain of Thought initialized for project: {project_name}"
+                "content": context
             }, indent=2)
         else:
             logger.error(f"Unsupported format: {format}")
             return
 
         with open(new_cot_file, 'w') as f:
-            f.write(initial_entry)
+            f.write(content)
         logger.info(f"Created new CoT file: {new_cot_file}")
     except IOError as e:
         logger.error(f"Error creating CoT file: {e}")
 
-def _update_cot(project_name, prompt=None):
-    logger.info(f"[NO-OP] Executing _update_cot with project_name: {project_name}, prompt: {prompt}")
-    pass
+def _update_cot(project_name, context, format='md'):
+    project_dir = os.path.join(os.getcwd(), project_name)
+    context_dir = os.path.join(project_dir, '.context')
+
+    if not os.path.exists(context_dir):
+        logger.error(f"Context directory does not exist: {context_dir}")
+        return
+
+    existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
+    if not existing_files:
+        logger.error(f"No existing CoT files found for project: {project_name}")
+        return
+
+    latest_file = max(existing_files)
+    cot_file = os.path.join(context_dir, latest_file)
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        if format == 'md':
+            with open(cot_file, 'a') as f:
+                f.write(f"\n\n## Update: {timestamp}\n\n")
+                f.write(context)
+        elif format == 'json':
+            with open(cot_file, 'r+') as f:
+                data = json.load(f)
+                data['updates'] = data.get('updates', []) + [{
+                    "timestamp": timestamp,
+                    "content": context
+                }]
+                f.seek(0)
+                json.dump(data, f, indent=2)
+                f.truncate()
+        else:
+            logger.error(f"Unsupported format: {format}")
+            return
+
+        logger.info(f"Updated CoT file: {cot_file}")
+    except IOError as e:
+        logger.error(f"Error updating CoT file: {e}")
 
 def _compress_cot(project_name):
     logger.info(f"[NO-OP] Executing _compress_cot with project_name: {project_name}")
