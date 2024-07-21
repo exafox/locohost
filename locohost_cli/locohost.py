@@ -398,8 +398,6 @@ def main():
     elif args.action == "generate_or_update_production_deployment":
         generate_or_update_production_deployment(args.project_name)
 
-if __name__ == "__main__":
-    main()
 def get_snapshot_data(context: str) -> SnapshotData:
     response = client.chat.completions.create(
         model="claude-3-opus-20240229",
@@ -414,13 +412,11 @@ def get_snapshot_data(context: str) -> SnapshotData:
     )
     return response
 
-# Example usage
-# snapshot = get_snapshot_data("Some context about the project")
-# print(snapshot.file_text)
-# print(snapshot.commit_message)
-# print(snapshot.changelog)
 def _get_context_dir(project_name, context_dir=None):
     if context_dir is None:
         project_dir = os.getcwd()
         context_dir = os.path.join(project_dir, '.context')
     return context_dir
+
+if __name__ == "__main__":
+    main()
