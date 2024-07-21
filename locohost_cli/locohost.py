@@ -200,13 +200,12 @@ def _compress_cot(project_name, context_dir=None):
         return
 
     # 5. Commit the changes to git
-    git_root = os.path.dirname(context_dir)
-    git_add_command = ["git", "add", os.path.relpath(snapshot_file, git_root)]
+    git_add_command = ["git", "add", os.path.basename(snapshot_file)]
     git_commit_command = ["git", "commit", "-m", commit_message]
     
     logger.debug(f"Running git add command: {' '.join(git_add_command)}")
     try:
-        subprocess.run(git_add_command, cwd=git_root, check=True)
+        subprocess.run(git_add_command, cwd=context_dir, check=True)
     except subprocess.CalledProcessError as e:
         logger.error(f"Error running git add: {e}")
         logger.exception("Detailed error information:")
@@ -214,7 +213,7 @@ def _compress_cot(project_name, context_dir=None):
 
     logger.debug(f"Running git commit command: {' '.join(git_commit_command)}")
     try:
-        subprocess.run(git_commit_command, cwd=git_root, check=True)
+        subprocess.run(git_commit_command, cwd=context_dir, check=True)
     except subprocess.CalledProcessError as e:
         logger.error(f"Error running git commit: {e}")
         logger.exception("Detailed error information:")
