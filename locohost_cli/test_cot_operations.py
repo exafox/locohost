@@ -46,9 +46,8 @@ def test_compress_cot(project_setup):
     project_name, _, context_dir = project_setup
     _create_cot(project_name, "Initial CoT entry", context_dir=context_dir)
     _update_cot(project_name, "Updated CoT entry", context_dir=context_dir)
-    _compress_cot(project_name, context_dir=context_dir)
+    snapshot_file = _compress_cot(project_name, context_dir=context_dir)
     
-    snapshot_file = os.path.join(context_dir, 'snapshot.md')
     assert os.path.exists(snapshot_file)
     
     with open(snapshot_file, 'r') as f:
