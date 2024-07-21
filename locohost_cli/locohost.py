@@ -140,7 +140,7 @@ def _compress_cot(project_name, context_dir=None):
     logger.debug(f"CoT content length: {len(cot_content)} characters")
 
     # 3. Send data to Anthropic for compression and commit message generation
-    prompt = f"""Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
+    prompt = f"""Human: Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
     Remove old or outdated information, but take great care not to lose any important signals.
     
     Current snapshot:
@@ -161,6 +161,8 @@ def _compress_cot(project_name, context_dir=None):
     [COMMIT_MESSAGE]
     (Your commit message here)
     [/COMMIT_MESSAGE]
+
+    Assistant:
     """
 
     logger.info("Sending request to Anthropic API")
@@ -396,7 +398,7 @@ def main():
         generate_or_update_production_deployment(args.project_name)
 
 def get_snapshot_data(context: str) -> dict:
-    prompt = f"""Generate snapshot data based on this context: {context}
+    prompt = f"""Human: Generate snapshot data based on this context: {context}
     
     Format your response as follows:
     [FILE_TEXT]
@@ -410,6 +412,8 @@ def get_snapshot_data(context: str) -> dict:
     [CHANGELOG]
     (Your changelog here)
     [/CHANGELOG]
+
+    Assistant: 
     """
 
     response = client.completions.create(
