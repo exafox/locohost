@@ -1,8 +1,13 @@
 import os
 from setuptools import setup, find_packages
 
-with open("requirements.txt") as f:
+# Read requirements from the requirements.txt file
+with open(os.path.join(os.path.dirname(__file__), "requirements.txt")) as f:
     requirements = f.read().splitlines()
+
+# Read the contents of README.md
+with open(os.path.join(os.path.dirname(__file__), "readme.md"), "r", encoding="utf-8") as f:
+    long_description = f.read()
 
 setup(
     name="locohost-cli",
@@ -15,12 +20,12 @@ setup(
             "locohost=locohost_cli.locohost:main",
         ],
     },
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="Stefan Fox",
+    author_email="stefan.fox@example.com",
     description="AI-assisted project management and development tool for Kubernetes-based applications",
-    long_description=open("locohost_cli/readme.md").read() if os.path.exists("locohost_cli/readme.md") else "AI-assisted project management and development tool for Kubernetes-based applications",
-    long_description_content_type="text/markdown" if os.path.exists("locohost_cli/readme.md") else "text/plain",
-    url="https://github.com/yourusername/locohost-cli",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/stefanfox/locohost-cli",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
