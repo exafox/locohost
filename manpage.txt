@@ -1,0 +1,29 @@
+.TH YOURCOMMAND 1 "July 2024" "Version 1.0" "User Commands"
+.SH NAME
+yourcommand \- brief description of your command
+.SH SYNOPSIS
+.B yourcommand
+[\fIOPTION\fR]...
+.SH DESCRIPTION
+This manual page documents the
+.B yourcommand
+command.
+.PP
+.B yourcommand
+is a program that...
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Display help message and exit.
+.SH EXAMPLES
+.PP
+.B yourcommand
+.PP
+This will run the command with default options.
+.SH SEE ALSO
+.PP
+Full documentation at: <https://your-website.com/docs>
+.SH BUGS
+Report bugs to: <your-email@example.com>
+.SH AUTHOR
+Your Name <your-email@example.com>
