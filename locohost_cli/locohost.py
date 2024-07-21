@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from instructor import llm_validator
 import anthropic
 
-print("OMG THIS IS CHANGING!@!@@@@")
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
