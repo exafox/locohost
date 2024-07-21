@@ -153,7 +153,7 @@ def _compress_cot(project_name, context_dir=None):
     logger.debug(f"CoT content length: {len(cot_content)} characters")
 
     # 3. Send data to Anthropic for compression and commit message generation
-    client = anthropic.Anthropic()
+    client = instructor.from_anthropic(Anthropic())
     prompt = f"""Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
     Remove old or outdated information, but take great care not to lose any important signals.
     
