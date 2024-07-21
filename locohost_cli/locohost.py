@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 client = anthropic.Anthropic()
 
-@llm_validator(client=client)
+@llm_validator(client=client, statement="Validate the SnapshotData model")
 class SnapshotData(BaseModel):
     file_text: str
     commit_message: str
