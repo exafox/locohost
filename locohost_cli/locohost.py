@@ -20,8 +20,8 @@ class SnapshotData(BaseModel):
 # ========================
 
 def _create_cot(project_name, context, format='md'):
-    project_dir = os.path.join(os.getcwd(), project_name)
-    context_dir = os.path.join(project_dir, '.context')
+    project_dir = os.getcwd()
+    context_dir = os.path.join(project_dir, project_name, '.context')
 
     if not os.path.exists(project_dir):
         logger.error(f"Project directory does not exist: {project_dir}")
@@ -62,8 +62,8 @@ def _create_cot(project_name, context, format='md'):
         logger.error(f"Error creating CoT file: {e}")
 
 def _update_cot(project_name, context, format='md'):
-    project_dir = os.path.join(os.getcwd(), project_name)
-    context_dir = os.path.join(project_dir, '.context')
+    project_dir = os.getcwd()
+    context_dir = os.path.join(project_dir, project_name, '.context')
 
     if not os.path.exists(context_dir):
         logger.error(f"Context directory does not exist: {context_dir}")
@@ -105,8 +105,8 @@ import subprocess
 import anthropic
 
 def _compress_cot(project_name):
-    project_dir = os.path.join(os.getcwd(), project_name)
-    context_dir = os.path.join(project_dir, '.context')
+    project_dir = os.getcwd()
+    context_dir = os.path.join(project_dir, project_name, '.context')
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
 
     # 1. Read the current snapshot file

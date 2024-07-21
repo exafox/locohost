@@ -5,8 +5,8 @@ from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot
 @pytest.fixture
 def project_setup(tmpdir):
     project_name = "test_project"
-    project_dir = tmpdir.mkdir(project_name)
-    context_dir = project_dir.mkdir('.context')
+    project_dir = tmpdir
+    context_dir = project_dir.mkdir(project_name).mkdir('.context')
     
     yield project_name, str(project_dir), str(context_dir)
     
