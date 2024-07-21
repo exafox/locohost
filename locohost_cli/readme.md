@@ -23,19 +23,29 @@ To run the tests for Locohost CLI, follow these steps:
 
 3. Run the tests using pytest:
    ```
-   pytest locohost-cli/test_cot_operations.py
+   pytest locohost_cli/test_cot_operations.py
    ```
 
 This will run all the tests in the `test_cot_operations.py` file.
 
 ## Usage
 
-[Add usage instructions here]
+To use Locohost CLI, run the following command:
+
+```
+python -m locohost_cli <action> [options]
+```
+
+For a list of available actions and options, run:
+
+```
+python -m locohost_cli --help
+```
 
 ## Contributing
 
-[Add contribution guidelines here]
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-[Add license information here]
+This project is licensed under the MIT License. See the LICENSE file for details.
