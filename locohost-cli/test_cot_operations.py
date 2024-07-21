@@ -26,6 +26,8 @@ def test_create_cot(project_setup):
     with open(os.path.join(context_dir, cot_files[0]), 'r') as f:
         content = f.read()
     assert "Initial CoT entry" in content
+    assert "# Chain of Thought Entry 1" in content
+    assert f"Project: {project_name}" in content
 
 def test_update_cot(project_setup):
     project_name, _, context_dir = project_setup
