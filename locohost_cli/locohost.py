@@ -9,10 +9,11 @@ import anthropic
 
 print("OMG THIS IS CHANGING!@!@@@@")
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 client = anthropic.Anthropic()
+logger.debug(f"Anthropic client initialized: {client}")
 
 @llm_validator(client=client, statement="Validate the SnapshotData model")
 class SnapshotData(BaseModel):
@@ -37,22 +38,28 @@ class SnapshotData(BaseModel):
 # ========================
 
 def _create_cot(project_name, context, format='md'):
+    logger.debug(f"Creating CoT for project: {project_name}, format: {format}")
     project_dir = os.getcwd()
     context_dir = os.path.join(project_dir, project_name, '.context')
+    logger.debug(f"Project directory: {project_dir}")
+    logger.debug(f"Context directory: {context_dir}")
 
     if not os.path.exists(project_dir):
         logger.error(f"Project directory does not exist: {project_dir}")
         return
 
     os.makedirs(context_dir, exist_ok=True)
+    logger.debug(f"Created context directory: {context_dir}")
 
     # Get the next available number for the CoT file
     existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
     next_number = len(existing_files) + 1
+    logger.debug(f"Next CoT number: {next_number}")
 
     # Create the new CoT file
     new_cot_file = os.path.join(context_dir, f'cot_{next_number:04d}.{format}')
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    logger.debug(f"New CoT file: {new_cot_file}")
     
     try:
         if format == 'md':
@@ -75,24 +82,31 @@ def _create_cot(project_name, context, format='md'):
         with open(new_cot_file, 'w') as f:
             f.write(content)
         logger.info(f"Created new CoT file: {new_cot_file}")
+        logger.debug(f"CoT content: {content[:100]}...")  # Log first 100 characters of content
     except IOError as e:
         logger.error(f"Error creating CoT file: {e}")
+        logger.exception("Detailed error information:")
 
 def _update_cot(project_name, context, format='md'):
+    logger.debug(f"Updating CoT for project: {project_name}, format: {format}")
     project_dir = os.getcwd()
     context_dir = os.path.join(project_dir, project_name, '.context')
+    logger.debug(f"Project directory: {project_dir}")
+    logger.debug(f"Context directory: {context_dir}")
 
     if not os.path.exists(context_dir):
         logger.error(f"Context directory does not exist: {context_dir}")
         return
 
     existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
+    logger.debug(f"Existing CoT files: {existing_files}")
     if not existing_files:
         logger.error(f"No existing CoT files found for project: {project_name}")
         return
 
     latest_file = max(existing_files)
     cot_file = os.path.join(context_dir, latest_file)
+    logger.debug(f"Latest CoT file: {cot_file}")
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     try:
@@ -100,6 +114,7 @@ def _update_cot(project_name, context, format='md'):
             with open(cot_file, 'a') as f:
                 f.write(f"\n\n## Update: {timestamp}\n\n")
                 f.write(context)
+            logger.debug(f"Updated MD file with new content")
         elif format == 'json':
             with open(cot_file, 'r+') as f:
                 data = json.load(f)
@@ -110,31 +125,48 @@ def _update_cot(project_name, context, format='md'):
                 f.seek(0)
                 json.dump(data, f, indent=2)
                 f.truncate()
+            logger.debug(f"Updated JSON file with new content")
         else:
             logger.error(f"Unsupported format: {format}")
             return
 
         logger.info(f"Updated CoT file: {cot_file}")
+        logger.debug(f"Updated content: {context[:100]}...")  # Log first 100 characters of updated content
     except IOError as e:
         logger.error(f"Error updating CoT file: {e}")
+        logger.exception("Detailed error information:")
 
 import subprocess
 import anthropic
 
 def _compress_cot(project_name):
+    logger.debug(f"Compressing CoT for project: {project_name}")
     project_dir = os.getcwd()
     context_dir = os.path.join(project_dir, project_name, '.context')
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
+    logger.debug(f"Project directory: {project_dir}")
+    logger.debug(f"Context directory: {context_dir}")
+    logger.debug(f"Snapshot file: {snapshot_file}")
 
     # 1. Read the current snapshot file
     current_snapshot = ""
     if os.path.exists(snapshot_file):
         with open(snapshot_file, 'r') as f:
             current_snapshot = f.read()
+        logger.debug(f"Current snapshot length: {len(current_snapshot)} characters")
+    else:
+        logger.debug("No existing snapshot file found")
 
     # 2. Run git diff and parse out changes in .context directory
     git_diff_command = f"git diff -- {context_dir}"
-    git_diff_output = subprocess.check_output(git_diff_command, shell=True, text=True)
+    logger.debug(f"Running git diff command: {git_diff_command}")
+    try:
+        git_diff_output = subprocess.check_output(git_diff_command, shell=True, text=True)
+        logger.debug(f"Git diff output length: {len(git_diff_output)} characters")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error running git diff: {e}")
+        logger.exception("Detailed error information:")
+        return
 
     # 3. Send data to Anthropic for compression and commit message generation
     client = anthropic.Anthropic()
@@ -161,28 +193,56 @@ def _compress_cot(project_name):
     [Your generated commit message here]
     """
 
-    response = client.completions.create(
-        model="claude-2",
-        prompt=prompt,
-        max_tokens_to_sample=100000,
-    )
+    logger.debug("Sending request to Anthropic API")
+    try:
+        response = client.completions.create(
+            model="claude-2",
+            prompt=prompt,
+            max_tokens_to_sample=100000,
+        )
+        logger.debug(f"Received response from Anthropic API, length: {len(response.completion)} characters")
+    except Exception as e:
+        logger.error(f"Error calling Anthropic API: {e}")
+        logger.exception("Detailed error information:")
+        return
 
     # Parse the response
     completion = response.completion
     parts = completion.split("COMMIT_MESSAGE:")
     compressed_content = parts[0].split("COMPRESSED_CONTENT:")[1].strip()
     commit_message = parts[1].strip() if len(parts) > 1 else ""
+    logger.debug(f"Compressed content length: {len(compressed_content)} characters")
+    logger.debug(f"Commit message: {commit_message}")
 
     # 4. Write the response to the new snapshot file
-    with open(snapshot_file, 'w') as f:
-        f.write(compressed_content)
+    try:
+        with open(snapshot_file, 'w') as f:
+            f.write(compressed_content)
+        logger.debug(f"Written compressed content to {snapshot_file}")
+    except IOError as e:
+        logger.error(f"Error writing to snapshot file: {e}")
+        logger.exception("Detailed error information:")
+        return
 
     # 5. Commit the changes to git
     git_add_command = f"git add {snapshot_file}"
     git_commit_command = f"git commit -m '{commit_message}'"
     
-    subprocess.run(git_add_command, shell=True, check=True)
-    subprocess.run(git_commit_command, shell=True, check=True)
+    logger.debug(f"Running git add command: {git_add_command}")
+    try:
+        subprocess.run(git_add_command, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error running git add: {e}")
+        logger.exception("Detailed error information:")
+        return
+
+    logger.debug(f"Running git commit command: {git_commit_command}")
+    try:
+        subprocess.run(git_commit_command, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error running git commit: {e}")
+        logger.exception("Detailed error information:")
+        return
 
     logger.info(f"CoT snapshot compressed and updated for project: {project_name}")
     logger.info(f"Commit message: {commit_message}")
