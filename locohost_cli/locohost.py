@@ -402,7 +402,7 @@ def main():
 if __name__ == "__main__":
     main()
 def get_snapshot_data(context: str) -> SnapshotData:
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model="claude-3-opus-20240229",
         max_tokens=1000,
         messages=[
