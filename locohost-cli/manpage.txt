@@ -35,12 +35,6 @@ ACTIONS
             --project-name    Name of the project
             --commit-message  Commit message
 
-    update_cot
-        Add a new entry to the Chain of Thought journal.
-        Options:
-            --project-name  Name of the project
-            --prompt        Prompt for the new CoT entry (optional)
-
     run_tests
         Analyze test results for the project.
         Options:
@@ -51,15 +45,8 @@ ACTIONS
         Options:
             --project-name  Name of the project
 
-    compress_cot
-        Create a lossless, organized summary of all CoT entries.
-        This should be called before generating or editing code.
-        Options:
-            --project-name  Name of the project
-
     generate_new_project_code
         Generate initial code for a new project based on requirements.
-        Ensure compress_cot is called before this action.
         Options:
             --project-name  Name of the project
             --language      Programming language to use (Python, Go, or TypeScript)
@@ -116,7 +103,6 @@ OPTIONS
     --project-name          Name of the project (required for most actions)
     --project-context-file  Path to the project context file (for create_prd)
     --commit-message        Commit message (for git_push)
-    --prompt                Prompt for new CoT entry (for update_cot)
     --language              Programming language (for generate_new_project_code)
     --prd-file              Path to the PRD file to edit (for edit_prd)
     --file-path             Path to the file to edit (for edit_project_code)
@@ -129,8 +115,7 @@ NOTES
     - The tool provides AI-assisted analysis for git operations, test results, and deployment processes.
     - When creating or editing PRDs, the tool uses Amazon's "Working Backwards" method, starting with a press release and FAQ.
     - The Chain of Thought (CoT) journaling feature provides a continuous record of project decisions and rationale.
-    - Always run compress_cot before generating new project code or editing existing code to ensure the most up-to-date context is used.
-    - The compress_cot command creates a lossless, organized summary of all CoT entries, essential for AI-assisted tasks.
+    - CoT entries are automatically created, updated, and compressed as needed during various operations.
     - Code generation and editing tasks are AI-assisted, supporting multiple languages (Python, Go, TypeScript).
     - The tool focuses on Kubernetes-based applications using PostgreSQL, with specific features for database management and deployment.
     - AI-assisted code review and refactoring help maintain code quality without changing functionality.
