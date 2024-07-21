@@ -1,6 +1,12 @@
 import unittest
 import os
 import shutil
+import sys
+import os
+
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot
 
 class TestCoTOperations(unittest.TestCase):
