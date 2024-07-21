@@ -21,4 +21,11 @@ To get started with locohost, follow these steps:
    ./bootstrap/bootstrap.sh
    ```
 
-This script will set up the necessary Python environment and install required dependencies.
+   This script will set up the necessary Python environment and install required dependencies.
+
+5. Activate the 'loco' environment:
+   ```
+   pyenv activate loco
+   ```
+
+   This will activate the Python environment created by the bootstrap script.
