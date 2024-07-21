@@ -12,7 +12,7 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-client = instructor.patch(Anthropic())
+client = instructor.from_anthropic(Anthropic())
 logger.debug(f"Instructor-patched Anthropic client initialized: {client}")
 
 class SnapshotData(BaseModel):
