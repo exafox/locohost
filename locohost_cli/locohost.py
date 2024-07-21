@@ -6,6 +6,7 @@ from datetime import datetime
 from pydantic import BaseModel
 import instructor
 from anthropic import Anthropic
+from pydantic import BaseModel
 
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
