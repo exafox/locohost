@@ -1,3 +1,4 @@
+import os
 from setuptools import setup, find_packages
 
 with open("requirements.txt") as f:
@@ -17,8 +18,8 @@ setup(
     author="Your Name",
     author_email="your.email@example.com",
     description="AI-assisted project management and development tool for Kubernetes-based applications",
-    long_description=open("README.md").read(),
-    long_description_content_type="text/markdown",
+    long_description="AI-assisted project management and development tool for Kubernetes-based applications",
+    long_description_content_type="text/plain",
     url="https://github.com/yourusername/locohost-cli",
     classifiers=[
         "Programming Language :: Python :: 3",
