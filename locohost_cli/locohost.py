@@ -14,6 +14,9 @@ client = anthropic.Anthropic()
 
 @llm_validator(client=client, statement="Validate the SnapshotData model")
 class SnapshotData(BaseModel):
+    """
+    A model to represent snapshot data.
+    """
     file_text: str
     commit_message: str
     changelog: str
