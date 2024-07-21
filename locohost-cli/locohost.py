@@ -20,8 +20,16 @@ def git_push(project_name, commit_message):
     logger.info(f"[NO-OP] Executing git_push with project_name: {project_name}, commit_message: {commit_message}")
     pass
 
-def update_cot(project_name, prompt=None):
-    logger.info(f"[NO-OP] Executing update_cot with project_name: {project_name}, prompt: {prompt}")
+def _create_cot(project_name):
+    logger.info(f"[NO-OP] Executing _create_cot with project_name: {project_name}")
+    pass
+
+def _update_cot(project_name, prompt=None):
+    logger.info(f"[NO-OP] Executing _update_cot with project_name: {project_name}, prompt: {prompt}")
+    pass
+
+def _compress_cot(project_name):
+    logger.info(f"[NO-OP] Executing _compress_cot with project_name: {project_name}")
     pass
 
 def run_tests(project_name):
