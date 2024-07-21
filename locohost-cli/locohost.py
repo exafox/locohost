@@ -98,11 +98,6 @@ def main():
     git_push_parser.add_argument("--project-name", required=True, help="Name of the project")
     git_push_parser.add_argument("--commit-message", required=True, help="Commit message")
 
-    # update_cot
-    update_cot_parser = subparsers.add_parser("update_cot", help="Add a new entry to the Chain of Thought journal")
-    update_cot_parser.add_argument("--project-name", required=True, help="Name of the project")
-    update_cot_parser.add_argument("--prompt", help="Prompt for the new CoT entry (optional)")
-
     # run_tests
     run_tests_parser = subparsers.add_parser("run_tests", help="Analyze test results for the project")
     run_tests_parser.add_argument("--project-name", required=True, help="Name of the project")
@@ -110,10 +105,6 @@ def main():
     # deploy
     deploy_parser = subparsers.add_parser("deploy", help="Analyze deployment information for the project")
     deploy_parser.add_argument("--project-name", required=True, help="Name of the project")
-
-    # compress_cot
-    compress_cot_parser = subparsers.add_parser("compress_cot", help="Create a lossless, organized summary of all CoT entries")
-    compress_cot_parser.add_argument("--project-name", required=True, help="Name of the project")
 
     # generate_new_project_code
     generate_new_project_code_parser = subparsers.add_parser("generate_new_project_code", help="Generate initial code for a new project based on requirements")
@@ -168,14 +159,10 @@ def main():
         start_project(args.project_name)
     elif args.action == "git_push":
         git_push(args.project_name, args.commit_message)
-    elif args.action == "update_cot":
-        update_cot(args.project_name, args.prompt)
     elif args.action == "run_tests":
         run_tests(args.project_name)
     elif args.action == "deploy":
         deploy(args.project_name)
-    elif args.action == "compress_cot":
-        compress_cot(args.project_name)
     elif args.action == "generate_new_project_code":
         generate_new_project_code(args.project_name, args.language)
     elif args.action == "edit_project_code":
