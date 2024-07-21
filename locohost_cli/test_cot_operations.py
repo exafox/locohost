@@ -19,7 +19,7 @@ def project_setup(tmp_path):
 
 def test_create_cot(project_setup):
     project_name, _, context_dir = project_setup
-    _create_cot(project_name, "Initial CoT entry")
+    _create_cot(project_name, "Initial CoT entry", context_dir=context_dir)
     cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
     assert len(cot_files) == 1
     
@@ -31,8 +31,8 @@ def test_create_cot(project_setup):
 
 def test_update_cot(project_setup):
     project_name, _, context_dir = project_setup
-    _create_cot(project_name, "Initial CoT entry")
-    _update_cot(project_name, "Updated CoT entry")
+    _create_cot(project_name, "Initial CoT entry", context_dir=context_dir)
+    _update_cot(project_name, "Updated CoT entry", context_dir=context_dir)
     
     cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
     assert len(cot_files) == 1
@@ -44,9 +44,9 @@ def test_update_cot(project_setup):
 
 def test_compress_cot(project_setup):
     project_name, _, context_dir = project_setup
-    _create_cot(project_name, "Initial CoT entry")
-    _update_cot(project_name, "Updated CoT entry")
-    _compress_cot(project_name)
+    _create_cot(project_name, "Initial CoT entry", context_dir=context_dir)
+    _update_cot(project_name, "Updated CoT entry", context_dir=context_dir)
+    _compress_cot(project_name, context_dir=context_dir)
     
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
     assert os.path.exists(snapshot_file)

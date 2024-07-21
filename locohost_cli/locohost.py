@@ -30,16 +30,12 @@ class SnapshotData(BaseModel):
 # Helper Functions
 # ========================
 
-def _create_cot(project_name, context, format='md'):
+def _create_cot(project_name, context, format='md', context_dir=None):
     logger.debug(f"Creating CoT for project: {project_name}, format: {format}")
-    project_dir = os.getcwd()
-    context_dir = os.path.join(project_dir, project_name, '.context')
-    logger.debug(f"Project directory: {project_dir}")
+    if context_dir is None:
+        project_dir = os.getcwd()
+        context_dir = os.path.join(project_dir, project_name, '.context')
     logger.debug(f"Context directory: {context_dir}")
-
-    if not os.path.exists(project_dir):
-        logger.error(f"Project directory does not exist: {project_dir}")
-        return
 
     os.makedirs(context_dir, exist_ok=True)
     logger.debug(f"Created context directory: {context_dir}")
@@ -80,15 +76,16 @@ def _create_cot(project_name, context, format='md'):
         logger.error(f"Error creating CoT file: {e}")
         logger.exception("Detailed error information:")
 
-def _update_cot(project_name, context, format='md'):
+def _update_cot(project_name, context, format='md', context_dir=None):
     logger.debug(f"Updating CoT for project: {project_name}, format: {format}")
-    project_dir = os.getcwd()
-    context_dir = os.path.join(project_dir, project_name, '.context')
-    logger.debug(f"Project directory: {project_dir}")
+    if context_dir is None:
+        project_dir = os.getcwd()
+        context_dir = os.path.join(project_dir, project_name, '.context')
     logger.debug(f"Context directory: {context_dir}")
 
     if not os.path.exists(context_dir):
         logger.error(f"Context directory does not exist: {context_dir}")
+        _create_cot(project_name, context, format, context_dir)
         return
 
     existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
@@ -132,14 +129,18 @@ def _update_cot(project_name, context, format='md'):
 import subprocess
 import anthropic
 
-def _compress_cot(project_name):
+def _compress_cot(project_name, context_dir=None):
     logger.debug(f"Compressing CoT for project: {project_name}")
-    project_dir = os.getcwd()
-    context_dir = os.path.join(project_dir, '.context')
+    if context_dir is None:
+        project_dir = os.getcwd()
+        context_dir = os.path.join(project_dir, '.context')
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
-    logger.debug(f"Project directory: {project_dir}")
     logger.debug(f"Context directory: {context_dir}")
     logger.debug(f"Snapshot file: {snapshot_file}")
+
+    if not os.path.exists(context_dir):
+        logger.error(f"Context directory does not exist: {context_dir}")
+        return
 
     # 1. Read the current snapshot file
     current_snapshot = ""
