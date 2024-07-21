@@ -140,8 +140,9 @@ def _compress_cot(project_name, context_dir=None):
     logger.debug(f"CoT content length: {len(cot_content)} characters")
 
     # 3. Send data to Anthropic for compression and commit message generation
-    prompt = f"""Human: Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
-    Remove old or outdated information, but take great care not to lose any important signals.
+    prompt = f"""Human: Please compress the following Chain of Thought (CoT) information. 
+    Preserve all important information, especially the content of the CoT entries.
+    You may reorganize and summarize the information, but do not remove any significant details.
     
     Current snapshot:
     {current_snapshot}
@@ -149,7 +150,7 @@ def _compress_cot(project_name, context_dir=None):
     CoT content:
     {cot_content}
     
-    Provide the compressed result in Markdown format, which may include JSON when appropriate.
+    Provide the compressed result in Markdown format, which should include all CoT entries in a summarized form.
     
     After compressing the content, please generate a concise and informative commit message that summarizes the key updates or changes made in this compression.
     
