@@ -111,7 +111,7 @@ def _compress_cot(project_name):
     git_diff_command = f"git diff -- {context_dir}"
     git_diff_output = subprocess.check_output(git_diff_command, shell=True, text=True)
 
-    # 3. Send data to Anthropic for compression
+    # 3. Send data to Anthropic for compression and commit message generation
     client = anthropic.Anthropic()
     prompt = f"""
     Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
@@ -124,6 +124,16 @@ def _compress_cot(project_name):
     {git_diff_output}
     
     Provide the compressed result in Markdown format, which may include JSON when appropriate.
+    
+    After compressing the content, please generate a concise and informative commit message that summarizes the key updates or changes made in this compression.
+    
+    Return your response in the following format:
+    
+    COMPRESSED_CONTENT:
+    [Your compressed content here]
+    
+    COMMIT_MESSAGE:
+    [Your generated commit message here]
     """
 
     response = client.completions.create(
@@ -132,30 +142,16 @@ def _compress_cot(project_name):
         max_tokens_to_sample=100000,
     )
 
-    compressed_content = response.completion
+    # Parse the response
+    parts = response.completion.split("COMMIT_MESSAGE:")
+    compressed_content = parts[0].split("COMPRESSED_CONTENT:")[1].strip()
+    commit_message = parts[1].strip()
 
     # 4. Write the response to the new snapshot file
     with open(snapshot_file, 'w') as f:
         f.write(compressed_content)
 
-    # 5. Generate commit message using LLM
-    commit_message_prompt = f"""
-    Please generate a concise and informative commit message for the following changes to the CoT snapshot:
-
-    {compressed_content}
-
-    The commit message should summarize the key updates or changes made in this compression.
-    """
-
-    commit_message_response = client.completions.create(
-        model="claude-2",
-        prompt=commit_message_prompt,
-        max_tokens_to_sample=100,
-    )
-
-    commit_message = commit_message_response.completion.strip()
-
-    # 6. Commit the changes to git
+    # 5. Commit the changes to git
     git_add_command = f"git add {snapshot_file}"
     git_commit_command = f"git commit -m '{commit_message}'"
     
