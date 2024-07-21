@@ -155,7 +155,7 @@ def _compress_cot(project_name, context_dir=None):
 
     # 3. Send data to Anthropic for compression and commit message generation
     client = anthropic.Anthropic()
-    prompt = f"""Human: Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
+    prompt = f"""Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
     Remove old or outdated information, but take great care not to lose any important signals.
     
     Current snapshot:
@@ -167,34 +167,25 @@ def _compress_cot(project_name, context_dir=None):
     Provide the compressed result in Markdown format, which may include JSON when appropriate.
     
     After compressing the content, please generate a concise and informative commit message that summarizes the key updates or changes made in this compression.
-    
-    Return your response in the following format:
-    
-    COMPRESSED_CONTENT:
-    [Your compressed content here]
-    
-    COMMIT_MESSAGE:
-    [Your generated commit message here]
     """
 
-    logger.debug("Sending request to Anthropic API")
+    logger.debug("Sending request to Anthropic API using instructor")
     try:
-        response = client.completions.create(
-            model="claude-2",
-            prompt=prompt,
-            max_tokens_to_sample=100000,
+        response = client.chat.completions.create(
+            model="claude-3-opus-20240229",
+            response_model=SnapshotData,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
         )
-        logger.debug(f"Received response from Anthropic API, length: {len(response.completion)} characters")
+        logger.debug(f"Received response from Anthropic API")
     except Exception as e:
         logger.error(f"Error calling Anthropic API: {e}")
         logger.exception("Detailed error information:")
         return
 
-    # Parse the response
-    completion = response.completion
-    parts = completion.split("COMMIT_MESSAGE:")
-    compressed_content = parts[0].split("COMPRESSED_CONTENT:")[1].strip()
-    commit_message = parts[1].strip() if len(parts) > 1 else ""
+    compressed_content = response.file_text
+    commit_message = response.commit_message
     logger.debug(f"Compressed content length: {len(compressed_content)} characters")
     logger.debug(f"Commit message: {commit_message}")
 
