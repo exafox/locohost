@@ -53,7 +53,6 @@ ACTIONS
 
     edit_project_code
         Edit existing project code with AI assistance.
-        Ensure compress_cot is called before this action.
         Options:
             --project-name  Name of the project
             --file-path     Path to the file to edit
@@ -63,6 +62,41 @@ ACTIONS
         Options:
             --project-name  Name of the project
             --diff-file     Path to the diff file
+
+    review_and_refactor
+        Improve code quality while maintaining existing functionality.
+        Options:
+            --project-name  Name of the project
+
+    generate_performance_tests
+        Create tests to measure and ensure application performance.
+        Options:
+            --project-name  Name of the project
+
+    upgrade_dependencies
+        Safely update project dependencies to their latest compatible versions.
+        Options:
+            --project-name  Name of the project
+
+    bootstrap_database_migrations
+        Set up and manage database schema changes for PostgreSQL.
+        Options:
+            --project-name  Name of the project
+
+    generate_docs_snapshot
+        Automatically create or update project documentation.
+        Options:
+            --project-name  Name of the project
+
+    generate_or_update_local_deployment
+        Configure or update the local development environment.
+        Options:
+            --project-name  Name of the project
+
+    generate_or_update_production_deployment
+        Prepare or update Kubernetes configurations for production deployment.
+        Options:
+            --project-name  Name of the project
 
     review_and_refactor
         Improve code quality while maintaining existing functionality.
@@ -128,12 +162,13 @@ EXAMPLES
     locohost.py create_prd --project-context-file project_context.txt
     locohost.py edit_prd --project-name MyProject --prd-file MyProject_PRD.md
     locohost.py start_project --project-name MyProject
-    locohost.py update_cot --project-name MyProject --prompt "Implement user authentication"
     locohost.py deploy --project-name MyProject
-    locohost.py compress_cot --project-name MyProject
     locohost.py generate_new_project_code --project-name MyProject --language Python
     locohost.py edit_project_code --project-name MyProject --file-path src/main.py
     locohost.py generate_tests_for_diff --project-name MyProject --diff-file changes.diff
+    locohost.py review_and_refactor --project-name MyProject
+    locohost.py generate_performance_tests --project-name MyProject
+    locohost.py generate_or_update_production_deployment --project-name MyProject
     locohost.py review_and_refactor --project-name MyProject
     locohost.py generate_performance_tests --project-name MyProject
     locohost.py generate_or_update_production_deployment --project-name MyProject
