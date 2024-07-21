@@ -5,11 +5,14 @@ import os
 from datetime import datetime
 from pydantic import BaseModel
 from instructor import llm_validator
+import anthropic
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@llm_validator
+client = anthropic.Anthropic()
+
+@llm_validator(client=client)
 class SnapshotData(BaseModel):
     file_text: str
     commit_message: str
