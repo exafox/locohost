@@ -4,7 +4,6 @@ import json
 import os
 from datetime import datetime
 from pydantic import BaseModel
-from instructor import llm_validator
 import instructor
 from anthropic import Anthropic
 
@@ -13,8 +12,8 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger(__name__)
 
 anthropic_client = Anthropic()
-client = instructor.from_anthropic(anthropic_client)
-logger.debug(f"Instructor-wrapped Anthropic client initialized: {client}")
+client = instructor.patch(anthropic_client)
+logger.debug(f"Instructor-patched Anthropic client initialized: {client}")
 
 class SnapshotData(BaseModel):
     """
