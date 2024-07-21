@@ -154,9 +154,10 @@ def _compress_cot(project_name):
     )
 
     # Parse the response
-    parts = response.completion.split("COMMIT_MESSAGE:")
+    completion = response.completion
+    parts = completion.split("COMMIT_MESSAGE:")
     compressed_content = parts[0].split("COMPRESSED_CONTENT:")[1].strip()
-    commit_message = parts[1].strip()
+    commit_message = parts[1].strip() if len(parts) > 1 else ""
 
     # 4. Write the response to the new snapshot file
     with open(snapshot_file, 'w') as f:
