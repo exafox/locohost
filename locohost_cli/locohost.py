@@ -32,9 +32,7 @@ class SnapshotData(BaseModel):
 
 def _create_cot(project_name, context, format='md', context_dir=None):
     logger.debug(f"Creating CoT for project: {project_name}, format: {format}")
-    if context_dir is None:
-        project_dir = os.getcwd()
-        context_dir = os.path.join(project_dir, project_name, '.context')
+    context_dir = _get_context_dir(project_name, context_dir)
     logger.debug(f"Context directory: {context_dir}")
 
     os.makedirs(context_dir, exist_ok=True)
@@ -78,9 +76,7 @@ def _create_cot(project_name, context, format='md', context_dir=None):
 
 def _update_cot(project_name, context, format='md', context_dir=None):
     logger.debug(f"Updating CoT for project: {project_name}, format: {format}")
-    if context_dir is None:
-        project_dir = os.getcwd()
-        context_dir = os.path.join(project_dir, project_name, '.context')
+    context_dir = _get_context_dir(project_name, context_dir)
     logger.debug(f"Context directory: {context_dir}")
 
     if not os.path.exists(context_dir):
@@ -131,9 +127,7 @@ import anthropic
 
 def _compress_cot(project_name, context_dir=None):
     logger.debug(f"Compressing CoT for project: {project_name}")
-    if context_dir is None:
-        project_dir = os.getcwd()
-        context_dir = os.path.join(project_dir, '.context')
+    context_dir = _get_context_dir(project_name, context_dir)
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
     logger.debug(f"Context directory: {context_dir}")
     logger.debug(f"Snapshot file: {snapshot_file}")
@@ -435,3 +429,8 @@ def get_snapshot_data(context: str) -> SnapshotData:
 # print(snapshot.file_text)
 # print(snapshot.commit_message)
 # print(snapshot.changelog)
+def _get_context_dir(project_name, context_dir=None):
+    if context_dir is None:
+        project_dir = os.getcwd()
+        context_dir = os.path.join(project_dir, '.context')
+    return context_dir
