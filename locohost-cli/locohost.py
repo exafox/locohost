@@ -138,14 +138,32 @@ def _compress_cot(project_name):
     with open(snapshot_file, 'w') as f:
         f.write(compressed_content)
 
-    # 5. Commit the changes to git
+    # 5. Generate commit message using LLM
+    commit_message_prompt = f"""
+    Please generate a concise and informative commit message for the following changes to the CoT snapshot:
+
+    {compressed_content}
+
+    The commit message should summarize the key updates or changes made in this compression.
+    """
+
+    commit_message_response = client.completions.create(
+        model="claude-2",
+        prompt=commit_message_prompt,
+        max_tokens_to_sample=100,
+    )
+
+    commit_message = commit_message_response.completion.strip()
+
+    # 6. Commit the changes to git
     git_add_command = f"git add {snapshot_file}"
-    git_commit_command = f"git commit -m 'Update CoT snapshot'"
+    git_commit_command = f"git commit -m '{commit_message}'"
     
     subprocess.run(git_add_command, shell=True, check=True)
     subprocess.run(git_commit_command, shell=True, check=True)
 
     logger.info(f"CoT snapshot compressed and updated for project: {project_name}")
+    logger.info(f"Commit message: {commit_message}")
 
 # ========================
 # Entrypoint Functions
