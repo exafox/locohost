@@ -1,21 +1,16 @@
 import pytest
 import os
-import shutil
 from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot
 
 @pytest.fixture
-def project_setup():
+def project_setup(tmpdir):
     project_name = "test_project"
-    project_dir = os.path.join(os.getcwd(), project_name)
-    context_dir = os.path.join(project_dir, '.context')
+    project_dir = tmpdir.mkdir(project_name)
+    context_dir = project_dir.mkdir('.context')
     
-    # Create project directory
-    os.makedirs(context_dir, exist_ok=True)
+    yield project_name, str(project_dir), str(context_dir)
     
-    yield project_name, project_dir, context_dir
-    
-    # Clean up: remove the test project directory
-    shutil.rmtree(project_dir)
+    # Clean up is handled automatically by pytest's tmpdir fixture
 
 def test_create_cot(project_setup):
     project_name, _, context_dir = project_setup
