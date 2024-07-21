@@ -140,9 +140,9 @@ EXAMPLES
     locohost.py generate_or_update_production_deployment --project-name MyProject
 
 AUTHOR
-    Written by Stefan Fox / @exafox
+    Written by Your Name
 
 REPORTING BUGS
-    Report bugs to @exafox
+    Report bugs to Your GitHub Username
 COPYRIGHT
     Copyright © 2023 Stefan Fox.
