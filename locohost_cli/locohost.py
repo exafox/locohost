@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger(__name__)
 
 # Initialize the Anthropic client once at the module level
-client = Anthropic()
+client = Anthropic(api_url="https://api.anthropic.com/v1/messages")
 logger.debug(f"Anthropic client initialized: {client}")
 
 # ========================
@@ -167,10 +167,12 @@ def _compress_cot(project_name, context_dir=None):
 
     logger.info("Sending request to Anthropic API")
     try:
-        response = client.completions.create(
+        response = client.messages.create(
             model="claude-3-5-sonnet-20240620",
-            max_tokens_to_sample=3000,
-            prompt=prompt
+            max_tokens=3000,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
         )
         logger.debug(f"Received response from Anthropic API")
     except Exception as e:
@@ -178,7 +180,7 @@ def _compress_cot(project_name, context_dir=None):
         logger.exception("Detailed error information:")
         return
 
-    response_content = response.completion
+    response_content = response.content[0].text
 
     # Extract compressed content and commit message from the response
     compressed_content = response_content.split("[COMPRESSED_CONTENT]")[1].split("[/COMPRESSED_CONTENT]")[0].strip()
