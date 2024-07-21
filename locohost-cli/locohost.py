@@ -48,9 +48,6 @@ def deploy(project_name):
     logger.info(f"[NO-OP] Executing deploy with project_name: {project_name}")
     pass
 
-def compress_cot(project_name):
-    logger.info(f"[NO-OP] Executing compress_cot with project_name: {project_name}")
-    pass
 
 def generate_new_project_code(project_name, language):
     logger.info(f"[NO-OP] Executing generate_new_project_code with project_name: {project_name}, language: {language}")
@@ -181,6 +178,8 @@ def main():
         deploy(args.project_name)
     elif args.action == "generate_new_project_code":
         generate_new_project_code(args.project_name, args.language)
+    elif args.action == "edit_project_code":
+        edit_project_code(args.project_name, args.file_path)
     elif args.action == "edit_project_code":
         edit_project_code(args.project_name, args.file_path)
     elif args.action == "generate_tests_for_diff":
