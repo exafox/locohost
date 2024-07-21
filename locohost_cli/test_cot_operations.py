@@ -1,10 +1,25 @@
 import pytest
 import os
 import logging
+import sys
 from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot
 
 # Configure logging to display messages during test execution
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+# Create console handler and set level to debug
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.DEBUG)
+
+# Create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# Add formatter to ch
+ch.setFormatter(formatter)
+
+# Add ch to logger
+logger.addHandler(ch)
 
 @pytest.fixture
 def project_setup(tmp_path):
