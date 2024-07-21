@@ -1,57 +1,79 @@
 import argparse
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def create_prd(project_context_file):
+    logger.info(f"Executing create_prd with project_context_file: {project_context_file}")
     pass
 
 def edit_prd(project_name, prd_file):
+    logger.info(f"Executing edit_prd with project_name: {project_name}, prd_file: {prd_file}")
     pass
 
 def start_project(project_name):
+    logger.info(f"Executing start_project with project_name: {project_name}")
     pass
 
 def git_push(project_name, commit_message):
+    logger.info(f"Executing git_push with project_name: {project_name}, commit_message: {commit_message}")
     pass
 
 def update_cot(project_name, prompt=None):
+    logger.info(f"Executing update_cot with project_name: {project_name}, prompt: {prompt}")
     pass
 
 def run_tests(project_name):
+    logger.info(f"Executing run_tests with project_name: {project_name}")
     pass
 
 def deploy(project_name):
+    logger.info(f"Executing deploy with project_name: {project_name}")
     pass
 
 def compress_cot(project_name):
+    logger.info(f"Executing compress_cot with project_name: {project_name}")
     pass
 
 def generate_new_project_code(project_name, language):
+    logger.info(f"Executing generate_new_project_code with project_name: {project_name}, language: {language}")
     pass
 
 def edit_project_code(project_name, file_path):
+    logger.info(f"Executing edit_project_code with project_name: {project_name}, file_path: {file_path}")
     pass
 
 def generate_tests_for_diff(project_name, diff_file):
+    logger.info(f"Executing generate_tests_for_diff with project_name: {project_name}, diff_file: {diff_file}")
     pass
 
 def review_and_refactor(project_name):
+    logger.info(f"Executing review_and_refactor with project_name: {project_name}")
     pass
 
 def generate_performance_tests(project_name):
+    logger.info(f"Executing generate_performance_tests with project_name: {project_name}")
     pass
 
 def upgrade_dependencies(project_name):
+    logger.info(f"Executing upgrade_dependencies with project_name: {project_name}")
     pass
 
 def bootstrap_database_migrations(project_name):
+    logger.info(f"Executing bootstrap_database_migrations with project_name: {project_name}")
     pass
 
 def generate_docs_snapshot(project_name):
+    logger.info(f"Executing generate_docs_snapshot with project_name: {project_name}")
     pass
 
 def generate_or_update_local_deployment(project_name):
+    logger.info(f"Executing generate_or_update_local_deployment with project_name: {project_name}")
     pass
 
 def generate_or_update_production_deployment(project_name):
+    logger.info(f"Executing generate_or_update_production_deployment with project_name: {project_name}")
     pass
 
 def main():
