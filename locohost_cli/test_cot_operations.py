@@ -7,14 +7,15 @@ from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 @pytest.fixture
-def project_setup(tmpdir):
+def project_setup(tmp_path):
     project_name = "test_project"
-    project_dir = tmpdir
-    context_dir = project_dir.mkdir(project_name).mkdir('.context')
+    project_dir = tmp_path
+    context_dir = project_dir / '.context'
+    context_dir.mkdir(parents=True, exist_ok=True)
     
     yield project_name, str(project_dir), str(context_dir)
     
-    # Clean up is handled automatically by pytest's tmpdir fixture
+    # Clean up is handled automatically by pytest's tmp_path fixture
 
 def test_create_cot(project_setup):
     project_name, _, context_dir = project_setup
