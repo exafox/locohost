@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(leve
 logger = logging.getLogger(__name__)
 
 # Initialize the Anthropic client once at the module level
-client = Anthropic(api_url="https://api.anthropic.com/v1/messages")
+client = Anthropic()
 logger.debug(f"Anthropic client initialized: {client}")
 
 # ========================
