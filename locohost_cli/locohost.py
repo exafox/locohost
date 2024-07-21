@@ -12,7 +12,8 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-client = instructor.from_anthropic(Anthropic())
+# Initialize the client once at the module level
+client = instructor.patch(Anthropic())
 logger.debug(f"Instructor-patched Anthropic client initialized: {client}")
 
 class SnapshotData(BaseModel):
@@ -153,7 +154,6 @@ def _compress_cot(project_name, context_dir=None):
     logger.debug(f"CoT content length: {len(cot_content)} characters")
 
     # 3. Send data to Anthropic for compression and commit message generation
-    client = instructor.from_anthropic(Anthropic())
     prompt = f"""Please compress the following Chain of Thought (CoT) information LOSSLESSLY. 
     Remove old or outdated information, but take great care not to lose any important signals.
     
@@ -171,7 +171,7 @@ def _compress_cot(project_name, context_dir=None):
     logger.info("Sending request to Anthropic API using instructor")
     try:
         response = client.chat.completions.create(
-            model="	claude-3-5-sonnet-20240620",
+            model="claude-3-5-sonnet-20240620",
             response_model=SnapshotData,
             messages=[
                 {"role": "user", "content": prompt}
@@ -399,8 +399,8 @@ def main():
         generate_or_update_production_deployment(args.project_name)
 
 def get_snapshot_data(context: str) -> SnapshotData:
-    response = client.chat.completions.create(
-        model="	claude-3-5-sonnet-20240620",
+    return client.chat.completions.create(
+        model="claude-3-5-sonnet-20240620",
         max_tokens=1000,
         messages=[
             {
@@ -410,7 +410,6 @@ def get_snapshot_data(context: str) -> SnapshotData:
         ],
         response_model=SnapshotData,
     )
-    return response
 
 def _get_context_dir(project_name, context_dir=None):
     if context_dir is None:
