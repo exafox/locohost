@@ -3,9 +3,17 @@ import logging
 import json
 import os
 from datetime import datetime
+from pydantic import BaseModel
+from instructor import llm_validator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+@llm_validator
+class SnapshotData(BaseModel):
+    file_text: str
+    commit_message: str
+    changelog: str
 
 # ========================
 # Helper Functions
