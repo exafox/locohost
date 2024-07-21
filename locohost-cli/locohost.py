@@ -4,6 +4,26 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ========================
+# Helper Functions
+# ========================
+
+def _create_cot(project_name):
+    logger.info(f"[NO-OP] Executing _create_cot with project_name: {project_name}")
+    pass
+
+def _update_cot(project_name, prompt=None):
+    logger.info(f"[NO-OP] Executing _update_cot with project_name: {project_name}, prompt: {prompt}")
+    pass
+
+def _compress_cot(project_name):
+    logger.info(f"[NO-OP] Executing _compress_cot with project_name: {project_name}")
+    pass
+
+# ========================
+# Entrypoint Functions
+# ========================
+
 def create_prd(project_context_file):
     logger.info(f"[NO-OP] Executing create_prd with project_context_file: {project_context_file}")
     pass
@@ -18,18 +38,6 @@ def start_project(project_name):
 
 def git_push(project_name, commit_message):
     logger.info(f"[NO-OP] Executing git_push with project_name: {project_name}, commit_message: {commit_message}")
-    pass
-
-def _create_cot(project_name):
-    logger.info(f"[NO-OP] Executing _create_cot with project_name: {project_name}")
-    pass
-
-def _update_cot(project_name, prompt=None):
-    logger.info(f"[NO-OP] Executing _update_cot with project_name: {project_name}, prompt: {prompt}")
-    pass
-
-def _compress_cot(project_name):
-    logger.info(f"[NO-OP] Executing _compress_cot with project_name: {project_name}")
     pass
 
 def run_tests(project_name):
