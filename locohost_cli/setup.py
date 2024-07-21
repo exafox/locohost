@@ -18,8 +18,8 @@ setup(
     author="Your Name",
     author_email="your.email@example.com",
     description="AI-assisted project management and development tool for Kubernetes-based applications",
-    long_description="AI-assisted project management and development tool for Kubernetes-based applications",
-    long_description_content_type="text/plain",
+    long_description=open("README.md").read() if os.path.exists("README.md") else "AI-assisted project management and development tool for Kubernetes-based applications",
+    long_description_content_type="text/markdown" if os.path.exists("README.md") else "text/plain",
     url="https://github.com/yourusername/locohost-cli",
     classifiers=[
         "Programming Language :: Python :: 3",
