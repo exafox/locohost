@@ -21,9 +21,16 @@ logger.debug(f"Anthropic client initialized: {client}")
 
 
 
+# Cache for the chain of thought journal
+_cot_journal_cache = {}
+
 def _get_chain_of_thought_journal(context_dir):
+    # Check if the journal for this context_dir is already cached
+    if context_dir in _cot_journal_cache:
+        return _cot_journal_cache[context_dir]
+
     # Create a separate logger for Chain of Thought entries
-    chain_of_thought_logger = logging.getLogger('chain_of_thought')
+    chain_of_thought_logger = logging.getLogger(f'chain_of_thought_{context_dir}')
     chain_of_thought_logger.setLevel(logging.INFO)
     cot_formatter = logging.Formatter('%(asctime)s - %(message)s')
     
@@ -45,7 +52,12 @@ def _get_chain_of_thought_journal(context_dir):
             self.logger.info(message)
             self.handler.flush()
 
-    return FlushingLogger(chain_of_thought_logger, cot_handler)
+    flushing_logger = FlushingLogger(chain_of_thought_logger, cot_handler)
+    
+    # Cache the logger
+    _cot_journal_cache[context_dir] = flushing_logger
+
+    return flushing_logger
 
     
 def _journal(project_name, content, format='md', context_dir=None):
