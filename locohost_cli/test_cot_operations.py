@@ -27,13 +27,18 @@ def project_setup(tmp_path):
     project_name = "test_project"
     project_dir = tmp_path
     
+    logger.info(f"Setting up project: {project_name}")
+    logger.info(f"Project directory: {project_dir}")
+    
     # Use start_project to initialize the project
     start_project(project_name, str(project_dir))
     
     context_dir = project_dir / project_name / '.context'
+    logger.info(f"Context directory: {context_dir}")
     
     yield project_name, str(project_dir / project_name), str(context_dir)
     
+    logger.info(f"Tearing down project: {project_name}")
     # Clean up is handled automatically by pytest's tmp_path fixture
 
 def test_start_project(tmp_path):
