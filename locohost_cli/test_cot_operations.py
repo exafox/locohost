@@ -108,6 +108,9 @@ def test_update_cot(project_setup):
 def test_compress_cot(project_setup):
     project_name, _, context_dir = project_setup
     
+    logger.info(f"Starting test_compress_cot for project: {project_name}")
+    logger.info(f"Context directory: {context_dir}")
+    
     # Add untrue statements
     untrue_statements = [
         "The Earth is flat.",
@@ -126,6 +129,11 @@ def test_compress_cot(project_setup):
     for statement in true_statements:
         _update_cot(project_name, f"True: {statement}", context_dir=context_dir)
     
+    # Log the contents of the context directory
+    logger.info(f"Contents of context directory before compression:")
+    for file in os.listdir(context_dir):
+        logger.info(f"- {file}")
+    
     snapshot_file = _compress_cot(project_name, context_dir=context_dir)
     
     assert os.path.exists(snapshot_file)
@@ -134,10 +142,12 @@ def test_compress_cot(project_setup):
     with open(snapshot_file, 'r') as f:
         content = f.read()
     
+    logger.info(f"Snapshot content:\n{content}")
+    
     # Check that true statements are included
     for statement in true_statements:
-        assert statement in content
+        assert statement in content, f"True statement not found in snapshot: {statement}"
     
     # Check that untrue statements are excluded
     for statement in untrue_statements:
-        assert statement not in content
+        assert statement not in content, f"Untrue statement found in snapshot: {statement}"

@@ -100,12 +100,13 @@ def _compress_cot(project_name, context_dir):
         logger.debug("No existing snapshot file found")
 
     # 2. Read all CoT files
-    cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
+    cot_files = [f for f in os.listdir(context_dir) if f.endswith('chain_of_thought.log')]
     cot_content = ""
     for cot_file in cot_files:
         with open(os.path.join(context_dir, cot_file), 'r') as f:
             cot_content += f.read() + "\n\n"
     logger.debug(f"CoT content length: {len(cot_content)} characters")
+    logger.debug(f"CoT files found: {cot_files}")
 
     # 3. Send data to Anthropic for compression and commit message generation
     prompt = f"""Human: Please compress the following Chain of Thought (CoT) information. 
@@ -228,6 +229,12 @@ def start_project(project_name, project_dir):
     initial_context = f"Project '{project_name}' initialized on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     _create_cot(project_name, initial_context, context_dir)
     logger.info(f"Initial CoT entry created for project '{context_dir}'")
+    
+    # Create initial snapshot
+    snapshot_file = os.path.join(context_dir, 'snapshot.md')
+    with open(snapshot_file, 'w') as f:
+        f.write(f"# {project_name} Snapshot\n\n{initial_context}\n")
+    logger.info(f"Initial snapshot created at {snapshot_file}")
     
     # Create basic project structure
     with open(os.path.join(project_dir, 'README.md'), 'w') as f:
