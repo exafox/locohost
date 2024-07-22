@@ -2,9 +2,10 @@ import argparse
 import logging
 import json
 import os
-import os
 from datetime import datetime
 from anthropic import Anthropic
+import subprocess
+from datetime import datetime
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -34,10 +35,14 @@ def _get_chain_of_thought_journal(context_dir):
     chain_of_thought_logger.setLevel(logging.INFO)
     cot_formatter = logging.Formatter('%(asctime)s - %(message)s')
     
+
     # Ensure the context directory exists
     os.makedirs(context_dir, exist_ok=True)
     
-    log_file_path = os.path.join(context_dir, 'chain_of_thought.log')
+
+    commit_position = int(subprocess.run(['git', 'rev-list', '--count', 'HEAD'], capture_output=True, text=True).stdout.strip())
+    iso_time = datetime.now().isoformat(timespec='seconds')
+    log_file_path = os.path.join(context_dir, '{commit_position}_{iso_time}_chain_of_thought.log')
     cot_handler = logging.FileHandler(log_file_path)
     cot_handler.setFormatter(cot_formatter)
     chain_of_thought_logger.addHandler(cot_handler)
