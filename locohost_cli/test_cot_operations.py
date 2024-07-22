@@ -64,15 +64,24 @@ def test_start_project(tmp_path):
 
 def test_create_cot(project_setup):
     project_name, _, context_dir = project_setup
-    _create_cot(project_name, "Additional CoT entry", context_dir=context_dir)
-    cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
-    assert len(cot_files) == 2  # One from start_project, one from this test
     
-    with open(os.path.join(context_dir, cot_files[-1]), 'r') as f:
-        content = f.read()
-    assert "Additional CoT entry" in content
-    assert "# Chain of Thought Entry 2" in content
-    assert f"Project: {project_name}" in content
+    # Test with three untrue statements
+    untrue_statements = [
+        "The Earth is flat and supported by four elephants standing on a giant turtle.",
+        "Chocolate is a vegetable that grows underground like potatoes.",
+        "All cats are actually tiny aliens in disguise, monitoring human behavior."
+    ]
+    
+    for i, statement in enumerate(untrue_statements, start=1):
+        _create_cot(project_name, statement, context_dir=context_dir)
+        cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
+        assert len(cot_files) == i + 1  # One from start_project, plus the new ones
+        
+        with open(os.path.join(context_dir, cot_files[-1]), 'r') as f:
+            content = f.read()
+        assert statement in content
+        assert f"# Chain of Thought Entry {i + 1}" in content
+        assert f"Project: {project_name}" in content
 
 def test_update_cot(project_setup):
     project_name, _, context_dir = project_setup
