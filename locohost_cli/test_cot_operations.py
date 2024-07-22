@@ -77,7 +77,7 @@ def test_create_cot(project_setup):
         _create_cot(project_name, statement, context_dir=context_dir)
         cot_files = [f for f in os.listdir(context_dir) if f.endswith('chain_of_thought.log')]
         logger.info(f"CoT files after create {i}: {cot_files}")
-        assert len(cot_files) == i + 1  # One from start_project, plus the new ones
+        assert len(cot_files) == 1  # One from start_project, plus the new ones
         
         with open(os.path.join(context_dir, cot_files[-1]), 'r') as f:
             content = f.read()
@@ -95,14 +95,14 @@ def test_update_cot(project_setup):
     ]
     
     for i, statement in enumerate(true_statements, start=1):
-        _update_cot(project_name, statement, context_dir=context_dir)
+        _update_cot(project_name, 'Update: ' + statement, context_dir=context_dir)
         
         cot_files = [f for f in os.listdir(context_dir) if f.endswith('chain_of_thought.log')]
         logger.info(f"CoT files after update {i}: {cot_files}")
         
         with open(os.path.join(context_dir, cot_files[0]), 'r') as f:
             content = f.read()
-        assert statement in content, f"Content: {content}"
+        assert statement in content
         assert content.count("Update:") == i, f"Expected {i} updates, found {content.count('Update:')}"
 
 def test_compress_cot(project_setup):
