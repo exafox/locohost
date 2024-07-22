@@ -75,6 +75,7 @@ def test_create_cot(project_setup):
     for i, statement in enumerate(untrue_statements, start=1):
         _create_cot(project_name, statement, context_dir=context_dir)
         cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
+        logger.info(f"CoT files after create {i}: {cot_files}")
         assert len(cot_files) == i + 1  # One from start_project, plus the new ones
         
         with open(os.path.join(context_dir, cot_files[-1]), 'r') as f:
@@ -96,6 +97,7 @@ def test_update_cot(project_setup):
         _update_cot(project_name, statement, context_dir=context_dir)
         
         cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
+        logger.info(f"CoT files after update {i}: {cot_files}")
         assert len(cot_files) == 1
         
         with open(os.path.join(context_dir, cot_files[0]), 'r') as f:
