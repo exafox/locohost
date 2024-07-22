@@ -238,12 +238,17 @@ def edit_prd(project_name, prd_file):
     logger.info(f"[NO-OP] Executing edit_prd with project_name: {project_name}, prd_file: {prd_file}")
     pass
 
-def start_project(project_name):
+def start_project(project_name, project_dir=None):
     logger.info(f"Starting new project: {project_name}")
     
-    # Create project directory
-    project_dir = os.path.join(os.getcwd(), project_name)
+    # Use provided project directory or create one in current working directory
+    if project_dir is None:
+        project_dir = os.path.join(os.getcwd(), project_name)
+    else:
+        project_dir = os.path.join(project_dir, project_name)
+    
     os.makedirs(project_dir, exist_ok=True)
+    logger.info(f"Project directory: {project_dir}")
     
     # Initialize git repository
     subprocess.run(["git", "init"], cwd=project_dir, check=True)
@@ -263,7 +268,7 @@ def start_project(project_name):
     with open(os.path.join(project_dir, '.gitignore'), 'w') as f:
         f.write("# Python\n__pycache__/\n*.py[cod]\n\n# Virtual environment\nvenv/\n.env\n")
     
-    logger.info(f"Project '{project_name}' initialized successfully.")
+    logger.info(f"Project '{project_name}' initialized successfully in {project_dir}")
 
 def git_push(project_name, commit_message):
     logger.info(f"[NO-OP] Executing git_push with project_name: {project_name}, commit_message: {commit_message}")
@@ -334,6 +339,7 @@ def main():
     # start_project
     start_project_parser = subparsers.add_parser("start_project", help="Initialize a new project with CoT journaling")
     start_project_parser.add_argument("--project-name", required=True, help="Name of the project")
+    start_project_parser.add_argument("--project-dir", help="Directory to create the project in (optional)")
 
     # git_push
     git_push_parser = subparsers.add_parser("git_push", help="Analyze git status and create a commit message")
@@ -398,7 +404,7 @@ def main():
     elif args.action == "edit_prd":
         edit_prd(args.project_name, args.prd_file)
     elif args.action == "start_project":
-        start_project(args.project_name)
+        start_project(args.project_name, args.project_dir)
     elif args.action == "git_push":
         git_push(args.project_name, args.commit_message)
     elif args.action == "run_tests":
