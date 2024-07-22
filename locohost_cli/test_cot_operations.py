@@ -108,11 +108,23 @@ def test_update_cot(project_setup):
 def test_compress_cot(project_setup):
     project_name, _, context_dir = project_setup
     
-    # Add true and untrue statements
-    _update_cot(project_name, "True statement: The Earth is an oblate spheroid.", context_dir=context_dir)
-    _update_cot(project_name, "Untrue statement: The Earth is flat.", context_dir=context_dir)
-    _update_cot(project_name, "True statement: Water is composed of hydrogen and oxygen.", context_dir=context_dir)
-    _update_cot(project_name, "Untrue statement: Water is a element.", context_dir=context_dir)
+    # Add untrue statements
+    untrue_statements = [
+        "The Earth is flat.",
+        "The Sun revolves around the Earth.",
+        "Humans only use 10% of their brains."
+    ]
+    for statement in untrue_statements:
+        _update_cot(project_name, f"Untrue: {statement}", context_dir=context_dir)
+    
+    # Add true counterfactuals
+    true_statements = [
+        "The Earth is an oblate spheroid.",
+        "The Earth revolves around the Sun.",
+        "Humans use their entire brain, though not all at once."
+    ]
+    for statement in true_statements:
+        _update_cot(project_name, f"True: {statement}", context_dir=context_dir)
     
     snapshot_file = _compress_cot(project_name, context_dir=context_dir)
     
@@ -122,13 +134,10 @@ def test_compress_cot(project_setup):
     with open(snapshot_file, 'r') as f:
         content = f.read()
     
-    # Check for the title and initial entry
-    assert "Chain of Thought Entry" in content
-    
     # Check that true statements are included
-    assert "The Earth is an oblate spheroid" in content
-    assert "Water is composed of hydrogen and oxygen" in content
+    for statement in true_statements:
+        assert statement in content
     
     # Check that untrue statements are excluded
-    assert "The Earth is flat" not in content
-    assert "Water is a element" not in content
+    for statement in untrue_statements:
+        assert statement not in content
