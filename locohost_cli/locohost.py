@@ -6,7 +6,7 @@ from datetime import datetime
 from anthropic import Anthropic
 import subprocess
 from datetime import datetime
-from session import Session
+from locohost_cli.session import Session
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

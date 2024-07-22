@@ -3,7 +3,7 @@ import os
 import logging
 import sys
 import subprocess
-from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot, start_project
+from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot, start_project, Session
 
 # Configure logging to display messages during test execution
 logger = logging.getLogger()
