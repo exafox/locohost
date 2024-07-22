@@ -239,8 +239,31 @@ def edit_prd(project_name, prd_file):
     pass
 
 def start_project(project_name):
-    logger.info(f"[NO-OP] Executing start_project with project_name: {project_name}")
-    pass
+    logger.info(f"Starting new project: {project_name}")
+    
+    # Create project directory
+    project_dir = os.path.join(os.getcwd(), project_name)
+    os.makedirs(project_dir, exist_ok=True)
+    
+    # Initialize git repository
+    subprocess.run(["git", "init"], cwd=project_dir, check=True)
+    
+    # Create .context directory
+    context_dir = os.path.join(project_dir, '.context')
+    os.makedirs(context_dir, exist_ok=True)
+    
+    # Create initial CoT entry
+    initial_context = f"Project '{project_name}' initialized on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    _create_cot(project_name, initial_context, context_dir=context_dir)
+    
+    # Create basic project structure
+    with open(os.path.join(project_dir, 'README.md'), 'w') as f:
+        f.write(f"# {project_name}\n\nProject description goes here.")
+    
+    with open(os.path.join(project_dir, '.gitignore'), 'w') as f:
+        f.write("# Python\n__pycache__/\n*.py[cod]\n\n# Virtual environment\nvenv/\n.env\n")
+    
+    logger.info(f"Project '{project_name}' initialized successfully.")
 
 def git_push(project_name, commit_message):
     logger.info(f"[NO-OP] Executing git_push with project_name: {project_name}, commit_message: {commit_message}")
