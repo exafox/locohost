@@ -12,7 +12,7 @@
             "cwd": "${workspaceFolder}",
             "env": {},
             "console": "integratedTerminal",
-            "python": "${workspaceFolder}/.venv/bin/python"
+            "python": "/home/stefan/.pyenv/shims/python"
         }
     ]
 }
