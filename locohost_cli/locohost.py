@@ -29,16 +29,23 @@ def _get_chain_of_thought_journal(context_dir):
     cot_handler.setFormatter(cot_formatter)
     chain_of_thought_logger.addHandler(cot_handler)
 
+    # Create a custom logger that flushes after each write
+    class FlushingLogger:
+        def __init__(self, logger, handler):
+            self.logger = logger
+            self.handler = handler
 
-    return chain_of_thought_logger
+        def info(self, message):
+            self.logger.info(message)
+            self.handler.flush()
+
+    return FlushingLogger(chain_of_thought_logger, cot_handler)
 
     
 def _journal(project_name, content, format='md', context_dir=None):
     context_dir = _get_context_dir(project_name, context_dir)
     journal = _get_chain_of_thought_journal(context_dir)
     journal.info(content)
-    # Log the CoT entry using the chain_of_thought_logger
-    chain_of_thought_logger.info(f"New CoT Entry {content}")
     
 def _create_cot(project_name, context, format='md', context_dir=None):
     _journal(project_name, context, format='md', context_dir=None)
