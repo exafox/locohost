@@ -298,23 +298,108 @@ def edit_project_code(project_name, file_path):
     
     relevant_files = locate_relevant_files(project_name, file_path)
     
-    # 3. Launch aider with correct files and snapshot
+    # 3. Use Claude to edit the code
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
     
-    aider_command = [
-        "aider",
-        "--openai-api-key", os.environ.get("OPENAI_API_KEY"),
-        "--model", "gpt-4",
-        "--input", snapshot_file,
-        *relevant_files
-    ]
+    with open(snapshot_file, 'r') as f:
+        snapshot_content = f.read()
     
-    try:
-        subprocess.run(aider_command, check=True)
-        logger.info(f"Aider session completed for project: {project_name}")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error running Aider: {e}")
-        logger.exception("Detailed error information:")
+    for file in relevant_files:
+        with open(file, 'r') as f:
+            file_content = f.read()
+        
+        prompt = f"""Human: I need to edit the following code file for the project {project_name}. 
+        Here's the current project context:
+        
+        {snapshot_content}
+        
+        And here's the content of the file to edit:
+        
+        {file_content}
+        
+        Please suggest improvements or changes to this code based on the project context and best practices.
+
+        Assistant: Certainly! I'll review the code and suggest improvements based on the project context and best practices. Here are my suggestions:
+
+        [Provide detailed suggestions for improvements or changes]
+
+        Human: Great, please provide the updated code incorporating these changes.
+
+        Assistant: Certainly! Here's the updated code incorporating the suggested changes:
+
+        [UPDATED_CODE]
+        {file_content}  # This will be replaced with the actual updated code
+        [/UPDATED_CODE]
+
+        Human: Thank you. Now, please provide a brief summary of the changes made and their rationale.
+
+        Assistant: Certainly! Here's a summary of the changes made and their rationale:
+
+        [CHANGE_SUMMARY]
+        1. [Change 1]: [Rationale]
+        2. [Change 2]: [Rationale]
+        ...
+        [/CHANGE_SUMMARY]
+
+        Human: Thank you for the summary. Please provide this information in the following format:
+        [FILE_TEXT]
+        (Updated file content)
+        [/FILE_TEXT]
+        
+        [COMMIT_MESSAGE]
+        (A concise commit message summarizing the changes)
+        [/COMMIT_MESSAGE]
+        
+        [CHANGELOG]
+        (A more detailed changelog entry)
+        [/CHANGELOG]
+
+        Assistant: Certainly! Here's the information in the requested format:
+
+        [FILE_TEXT]
+        {file_content}  # This will be replaced with the actual updated code
+        [/FILE_TEXT]
+        
+        [COMMIT_MESSAGE]
+        Updated {os.path.basename(file)}: [Brief summary of changes]
+        [/COMMIT_MESSAGE]
+        
+        [CHANGELOG]
+        - [Detailed change 1]
+        - [Detailed change 2]
+        ...
+        [/CHANGELOG]
+        """
+        
+        response = client.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=3000,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        response_content = response.content[0].text
+        
+        # Extract updated file content, commit message, and changelog
+        updated_content = response_content.split("[FILE_TEXT]")[1].split("[/FILE_TEXT]")[0].strip()
+        commit_message = response_content.split("[COMMIT_MESSAGE]")[1].split("[/COMMIT_MESSAGE]")[0].strip()
+        changelog = response_content.split("[CHANGELOG]")[1].split("[/CHANGELOG]")[0].strip()
+        
+        # Write the updated content back to the file
+        with open(file, 'w') as f:
+            f.write(updated_content)
+        
+        # Commit the changes
+        subprocess.run(["git", "add", file], cwd=os.path.dirname(file), check=True)
+        subprocess.run(["git", "commit", "-m", commit_message], cwd=os.path.dirname(file), check=True)
+        
+        # Update the changelog
+        changelog_file = os.path.join(context_dir, 'CHANGELOG.md')
+        with open(changelog_file, 'a') as f:
+            f.write(f"\n\n## {datetime.now().strftime('%Y-%m-%d')}\n{changelog}\n")
+    
+    logger.info(f"Code editing completed for project: {project_name}")
 
 def generate_tests_for_diff(project_name, diff_file):
     logger.info(f"[NO-OP] Executing generate_tests_for_diff with project_name: {project_name}, diff_file: {diff_file}")
