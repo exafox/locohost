@@ -242,8 +242,28 @@ def git_push(project_name, commit_message):
     pass
 
 def run_tests(project_name):
-    logger.info(f"[NO-OP] Executing run_tests with project_name: {project_name}")
-    pass
+    logger.info(f"Executing run_tests for project: {project_name}")
+    project_dir = os.path.join(os.getcwd(), project_name)
+    test_dir = os.path.join(project_dir, 'tests')
+    report_dir = os.path.join(project_dir, 'test_reports')
+    
+    os.makedirs(report_dir, exist_ok=True)
+    
+    report_file = os.path.join(report_dir, 'test_report.html')
+    
+    pytest_command = [
+        "pytest",
+        test_dir,
+        f"--html={report_file}",
+        "--self-contained-html"
+    ]
+    
+    try:
+        subprocess.run(pytest_command, check=True)
+        logger.info(f"Tests completed. HTML report generated at: {report_file}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Tests failed with exit code {e.returncode}")
+        logger.error(f"HTML report generated at: {report_file}")
 
 def deploy(project_name):
     logger.info(f"[NO-OP] Executing deploy with project_name: {project_name}")
@@ -376,6 +396,8 @@ def main():
         git_push(args.project_name, args.commit_message)
     elif args.action == "run_tests":
         run_tests(args.project_name)
+        print(f"Test report generated for project: {args.project_name}")
+        print("You can find the HTML report in the 'test_reports' directory of your project.")
     elif args.action == "deploy":
         deploy(args.project_name)
     elif args.action == "generate_new_project_code":
