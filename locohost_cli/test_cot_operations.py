@@ -96,6 +96,6 @@ def test_compress_cot(project_setup):
     
     with open(snapshot_file, 'r') as f:
         content = f.read()
-    assert "Chain of Thought Entries for" in content  # Check for the title
+    assert "Chain of Thought Entry" in content  # Check for the title
     assert "Project initialized" in content  # From start_project
     assert "Additional CoT entry" in content
