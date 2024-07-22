@@ -8,6 +8,14 @@ from anthropic import Anthropic
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Create a separate logger for Chain of Thought entries
+chain_of_thought_logger = logging.getLogger('chain_of_thought')
+chain_of_thought_logger.setLevel(logging.INFO)
+cot_formatter = logging.Formatter('%(asctime)s - %(message)s')
+cot_handler = logging.FileHandler('chain_of_thought.log')
+cot_handler.setFormatter(cot_formatter)
+chain_of_thought_logger.addHandler(cot_handler)
+
 # Initialize the Anthropic client once at the module level
 client = Anthropic()
 logger.debug(f"Anthropic client initialized: {client}")
@@ -54,8 +62,11 @@ def _create_cot(project_name, context, format='md', context_dir=None):
 
         with open(new_cot_file, 'w') as f:
             f.write(content)
+        
+        # Log the CoT entry using the chain_of_thought_logger
+        chain_of_thought_logger.info(f"New CoT Entry ({next_number}):\n{content}")
+        
         logger.info(f"Created new CoT file: {new_cot_file}")
-        logger.debug(f"CoT content: {content}")  # Log full content as debug
         return new_cot_file
     except IOError as e:
         logger.error(f"Error creating CoT file: {e}")
@@ -73,14 +84,13 @@ def _update_cot(project_name, context, format='md', context_dir=None):
 
     if not os.path.exists(context_dir):
         logger.error(f"Context directory does not exist: {context_dir}")
-        _create_cot(project_name, context, format, context_dir)
-        return
+        return _create_cot(project_name, context, format, context_dir)
 
     existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
     logger.debug(f"Existing CoT files: {existing_files}")
     if not existing_files:
         logger.error(f"No existing CoT files found for project: {project_name}")
-        return
+        return _create_cot(project_name, context, format, context_dir)
 
     latest_file = max(existing_files)
     cot_file = os.path.join(context_dir, latest_file)
@@ -92,7 +102,11 @@ def _update_cot(project_name, context, format='md', context_dir=None):
             with open(cot_file, 'a') as f:
                 update_content = f"\n\n## Update: {timestamp}\n\n{context}"
                 f.write(update_content)
-            logger.info(f"Updated MD file with new content: {update_content}")
+            
+            # Log the CoT update using the chain_of_thought_logger
+            chain_of_thought_logger.info(f"CoT Update ({latest_file}):\n{update_content}")
+            
+            logger.info(f"Updated MD file with new content")
         elif format == 'json':
             with open(cot_file, 'r+') as f:
                 data = json.load(f)
@@ -104,14 +118,22 @@ def _update_cot(project_name, context, format='md', context_dir=None):
                 f.seek(0)
                 json.dump(data, f, indent=2)
                 f.truncate()
-            logger.info(f"Updated JSON file with new content: {update}")
+            
+            # Log the CoT update using the chain_of_thought_logger
+            chain_of_thought_logger.info(f"CoT Update ({latest_file}):\n{json.dumps(update, indent=2)}")
+            
+            logger.info(f"Updated JSON file with new content")
         else:
             logger.error(f"Unsupported format: {format}")
             return
 
         logger.info(f"Updated CoT file: {cot_file}")
+        return cot_file
     except IOError as e:
         logger.error(f"Error updating CoT file: {e}")
+        logger.exception("Detailed error information:")
+    except Exception as e:
+        logger.error(f"Unexpected error in _update_cot: {e}")
         logger.exception("Detailed error information:")
 
 import subprocess
