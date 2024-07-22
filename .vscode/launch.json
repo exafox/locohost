@@ -7,7 +7,9 @@
             "request": "launch",
             "module": "pytest",
             "args": [
-                "locohost_cli/test_cot_operations.py"
+                "locohost_cli/test_cot_operations.py",
+                "--html=report.html",
+                "--self-contained-html"
             ],
             "cwd": "${workspaceFolder}",
             "env": {},
