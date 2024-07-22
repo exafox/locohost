@@ -3,7 +3,7 @@ import os
 import logging
 import sys
 import subprocess
-from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot, start_project, Session
+from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot, start_project, Session, _journal
 
 # Configure logging to display messages during test execution
 logger = logging.getLogger()
@@ -64,7 +64,9 @@ def test_start_project(tmp_path):
     assert os.path.exists(os.path.join(project_dir, project_name, '.git'))
 
 def test_create_cot(project_setup):
-    project_name, _, context_dir = project_setup
+    project_name, project_dir, context_dir = project_setup
+    session = Session()
+    session.set_project(project_name, os.path.dirname(project_dir))
     
     # Test with three untrue statements
     untrue_statements = [
@@ -74,7 +76,7 @@ def test_create_cot(project_setup):
     ]
     
     for i, statement in enumerate(untrue_statements, start=1):
-        _create_cot(project_name, statement, context_dir=context_dir)
+        _journal(statement)
         cot_files = [f for f in os.listdir(context_dir) if f.endswith('chain_of_thought.log')]
         logger.info(f"CoT files after create {i}: {cot_files}")
         assert len(cot_files) == 1  # One from start_project, plus the new ones
@@ -85,7 +87,9 @@ def test_create_cot(project_setup):
 
 
 def test_update_cot(project_setup):
-    project_name, _, context_dir = project_setup
+    project_name, project_dir, context_dir = project_setup
+    session = Session()
+    session.set_project(project_name, os.path.dirname(project_dir))
     
     # Test with three true statements that refute the untrue statements
     true_statements = [
@@ -95,7 +99,7 @@ def test_update_cot(project_setup):
     ]
     
     for i, statement in enumerate(true_statements, start=1):
-        _update_cot(project_name, 'Update: ' + statement, context_dir=context_dir)
+        _journal('Update: ' + statement)
         
         cot_files = [f for f in os.listdir(context_dir) if f.endswith('chain_of_thought.log')]
         logger.info(f"CoT files after update {i}: {cot_files}")
@@ -106,7 +110,9 @@ def test_update_cot(project_setup):
         assert content.count("Update:") == i, f"Expected {i} updates, found {content.count('Update:')}"
 
 def test_compress_cot(project_setup):
-    project_name, _, context_dir = project_setup
+    project_name, project_dir, context_dir = project_setup
+    session = Session()
+    session.set_project(project_name, os.path.dirname(project_dir))
     
     logger.info(f"Starting test_compress_cot for project: {project_name}")
     logger.info(f"Context directory: {context_dir}")
@@ -118,7 +124,7 @@ def test_compress_cot(project_setup):
         "Humans only use 10% of their brains."
     ]
     for statement in untrue_statements:
-        _update_cot(project_name, f"Untrue: {statement}", context_dir=context_dir)
+        _journal(f"Untrue: {statement}")
     
     # Add true counterfactuals
     true_statements = [
@@ -127,14 +133,14 @@ def test_compress_cot(project_setup):
         "Humans use their entire brain, though not all at once."
     ]
     for statement in true_statements:
-        _update_cot(project_name, f"True: {statement}", context_dir=context_dir)
+        _journal(f"True: {statement}")
     
     # Log the contents of the context directory
     logger.info(f"Contents of context directory before compression:")
     for file in os.listdir(context_dir):
         logger.info(f"- {file}")
     
-    snapshot_file = _compress_cot(project_name, context_dir=context_dir)
+    snapshot_file = _compress_cot()
     
     assert os.path.exists(snapshot_file)
     logger.info(f"Snapshot file created: {snapshot_file}")
