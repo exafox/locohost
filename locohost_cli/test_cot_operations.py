@@ -85,16 +85,26 @@ def test_create_cot(project_setup):
 
 def test_update_cot(project_setup):
     project_name, _, context_dir = project_setup
-    _update_cot(project_name, "Updated CoT entry", context_dir=context_dir)
     
-    cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
-    assert len(cot_files) == 1
+    # Test with three true statements that refute the untrue statements
+    true_statements = [
+        "The Earth is an oblate spheroid, orbiting the Sun in our solar system.",
+        "Chocolate is derived from cacao beans, which grow on trees in tropical regions.",
+        "Cats are domesticated mammals of the species Felis catus, not extraterrestrial beings."
+    ]
     
-    with open(os.path.join(context_dir, cot_files[0]), 'r') as f:
-        content = f.read()
-    assert "Project initialized" in content, f"Content: {content}"  # From start_project
-    assert "Updated CoT entry" in content, f"Content: {content}"
-    assert "Update:" in content, f"Content: {content}"  # Check for the update section
+    for i, statement in enumerate(true_statements, start=1):
+        _update_cot(project_name, statement, context_dir=context_dir)
+        
+        cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
+        assert len(cot_files) == 1
+        
+        with open(os.path.join(context_dir, cot_files[0]), 'r') as f:
+            content = f.read()
+        assert "Project initialized" in content, f"Content: {content}"  # From start_project
+        assert statement in content, f"Content: {content}"
+        assert f"Update:" in content, f"Content: {content}"  # Check for the update section
+        assert content.count("Update:") == i, f"Expected {i} updates, found {content.count('Update:')}"
 
 def test_compress_cot(project_setup):
     project_name, _, context_dir = project_setup
