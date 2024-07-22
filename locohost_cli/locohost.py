@@ -144,23 +144,25 @@ def _compress_cot(project_name, context_dir=None):
     Preserve all important information, especially the content of the CoT entries.
     You may reorganize and summarize the information, but do not remove any significant details.
     
+    Important: If there are any untrue statements in the CoT content, they should be removed or corrected in the compressed result. Only include factual and correct information in the final snapshot.
+    
     Current snapshot:
     {current_snapshot}
     
     CoT content:
     {cot_content}
     
-    Provide the compressed result in Markdown format, which should include all CoT entries in a summarized form.
+    Provide the compressed result in Markdown format, which should include all CoT entries in a summarized form, excluding any untrue statements.
     
-    After compressing the content, please generate a concise and informative commit message that summarizes the key updates or changes made in this compression.
+    After compressing the content, please generate a concise and informative commit message that summarizes the key updates or changes made in this compression, including any corrections of untrue statements.
     
     Format your response as follows:
     [COMPRESSED_CONTENT]
-    (Your compressed content here)
+    (Your compressed content here, with untrue statements removed or corrected)
     [/COMPRESSED_CONTENT]
     
     [COMMIT_MESSAGE]
-    (Your commit message here)
+    (Your commit message here, mentioning any corrections made)
     [/COMMIT_MESSAGE]
 
     Assistant:
