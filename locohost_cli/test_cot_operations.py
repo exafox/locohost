@@ -85,6 +85,7 @@ def test_update_cot(project_setup):
         content = f.read()
     assert "Project initialized" in content, f"Content: {content}"  # From start_project
     assert "Updated CoT entry" in content, f"Content: {content}"
+    assert "Update:" in content, f"Content: {content}"  # Check for the update section
 
 def test_compress_cot(project_setup):
     project_name, _, context_dir = project_setup
@@ -95,5 +96,6 @@ def test_compress_cot(project_setup):
     
     with open(snapshot_file, 'r') as f:
         content = f.read()
+    assert "Chain of Thought Entries for" in content  # Check for the title
     assert "Project initialized" in content  # From start_project
     assert "Additional CoT entry" in content
