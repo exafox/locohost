@@ -118,6 +118,7 @@ def test_compress_cot(project_setup):
     snapshot_file = _compress_cot(project_name, context_dir=context_dir)
     
     assert os.path.exists(snapshot_file)
+    logger.info(f"Snapshot file created: {snapshot_file}")
     
     with open(snapshot_file, 'r') as f:
         content = f.read()
