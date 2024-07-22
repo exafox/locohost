@@ -50,7 +50,7 @@ def test_start_project(tmp_path):
     assert os.path.exists(context_dir)
     
     # Check if initial CoT file is created
-    cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
+    cot_files = [f for f in os.listdir(context_dir) if f == 'chain_of_thought.log']
     assert len(cot_files) == 1
     
     # Check if README.md is created
