@@ -21,20 +21,20 @@ def _create_cot(project_name, context, format='md', context_dir=None):
     context_dir = _get_context_dir(project_name, context_dir)
     logger.debug(f"Context directory: {context_dir}")
 
-    os.makedirs(context_dir, exist_ok=True)
-    logger.debug(f"Created context directory: {context_dir}")
-
-    # Get the next available number for the CoT file
-    existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
-    next_number = len(existing_files) + 1
-    logger.debug(f"Next CoT number: {next_number}")
-
-    # Create the new CoT file
-    new_cot_file = os.path.join(context_dir, f'cot_{next_number:04d}.{format}')
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    logger.debug(f"New CoT file: {new_cot_file}")
-    
     try:
+        os.makedirs(context_dir, exist_ok=True)
+        logger.debug(f"Created context directory: {context_dir}")
+
+        # Get the next available number for the CoT file
+        existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
+        next_number = len(existing_files) + 1
+        logger.debug(f"Next CoT number: {next_number}")
+
+        # Create the new CoT file
+        new_cot_file = os.path.join(context_dir, f'cot_{next_number:04d}.{format}')
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        logger.debug(f"New CoT file: {new_cot_file}")
+    
         if format == 'md':
             content = f"# Chain of Thought Entry {next_number}\n\n"
             content += f"Created: {timestamp}\n\n"
@@ -50,15 +50,21 @@ def _create_cot(project_name, context, format='md', context_dir=None):
             }, indent=2)
         else:
             logger.error(f"Unsupported format: {format}")
-            return
+            return None
 
         with open(new_cot_file, 'w') as f:
             f.write(content)
         logger.info(f"Created new CoT file: {new_cot_file}")
-        logger.info(f"CoT content: {content}")  # Log full content
+        logger.debug(f"CoT content: {content}")  # Log full content as debug
+        return new_cot_file
     except IOError as e:
         logger.error(f"Error creating CoT file: {e}")
         logger.exception("Detailed error information:")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error in _create_cot: {e}")
+        logger.exception("Detailed error information:")
+        return None
 
 def _update_cot(project_name, context, format='md', context_dir=None):
     logger.debug(f"Updating CoT for project: {project_name}, format: {format}")
