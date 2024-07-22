@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Pytest",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "locohost_cli/test_cot_operations.py"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "console": "integratedTerminal"
+        }
+    ]
+}
