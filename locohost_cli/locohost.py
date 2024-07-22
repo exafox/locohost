@@ -283,8 +283,38 @@ def generate_new_project_code(project_name, language):
     pass
 
 def edit_project_code(project_name, file_path):
-    logger.info(f"[NO-OP] Executing edit_project_code with project_name: {project_name}, file_path: {file_path}")
-    pass
+    logger.info(f"Executing edit_project_code with project_name: {project_name}, file_path: {file_path}")
+    
+    # 1. Run compress_cot and create_prd
+    context_dir = os.path.join(os.getcwd(), project_name, '.context')
+    _compress_cot(project_name, context_dir)
+    create_prd(os.path.join(context_dir, 'project_context.txt'))
+    
+    # 2. Locate relevant files (stub)
+    def locate_relevant_files(project_name, file_path):
+        # This is a stub function. In a real implementation, this would use
+        # project-specific logic to find related files.
+        return [file_path]
+    
+    relevant_files = locate_relevant_files(project_name, file_path)
+    
+    # 3. Launch aider with correct files and snapshot
+    snapshot_file = os.path.join(context_dir, 'snapshot.md')
+    
+    aider_command = [
+        "aider",
+        "--openai-api-key", os.environ.get("OPENAI_API_KEY"),
+        "--model", "gpt-4",
+        "--input", snapshot_file,
+        *relevant_files
+    ]
+    
+    try:
+        subprocess.run(aider_command, check=True)
+        logger.info(f"Aider session completed for project: {project_name}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error running Aider: {e}")
+        logger.exception("Detailed error information:")
 
 def generate_tests_for_diff(project_name, diff_file):
     logger.info(f"[NO-OP] Executing generate_tests_for_diff with project_name: {project_name}, diff_file: {diff_file}")
