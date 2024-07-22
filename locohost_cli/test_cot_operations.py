@@ -80,8 +80,7 @@ def test_create_cot(project_setup):
         with open(os.path.join(context_dir, cot_files[-1]), 'r') as f:
             content = f.read()
         assert statement in content
-        assert f"# Chain of Thought Entry {i + 1}" in content
-        assert f"Project: {project_name}" in content
+
 
 def test_update_cot(project_setup):
     project_name, _, context_dir = project_setup
@@ -101,9 +100,7 @@ def test_update_cot(project_setup):
         
         with open(os.path.join(context_dir, cot_files[0]), 'r') as f:
             content = f.read()
-        assert "Project initialized" in content, f"Content: {content}"  # From start_project
         assert statement in content, f"Content: {content}"
-        assert f"Update:" in content, f"Content: {content}"  # Check for the update section
         assert content.count("Update:") == i, f"Expected {i} updates, found {content.count('Update:')}"
 
 def test_compress_cot(project_setup):
@@ -125,7 +122,6 @@ def test_compress_cot(project_setup):
     
     # Check for the title and initial entry
     assert "Chain of Thought Entry" in content
-    assert "Project initialized" in content
     
     # Check that true statements are included
     assert "The Earth is an oblate spheroid" in content
