@@ -238,14 +238,11 @@ def edit_prd(project_name, prd_file):
     logger.info(f"[NO-OP] Executing edit_prd with project_name: {project_name}, prd_file: {prd_file}")
     pass
 
-def start_project(project_name, project_dir=None):
+def start_project(project_name, project_dir):
     logger.info(f"Starting new project: {project_name}")
     
-    # Use provided project directory or create one in current working directory
-    if project_dir is None:
-        project_dir = os.path.join(os.getcwd(), project_name)
-    else:
-        project_dir = os.path.join(project_dir, project_name)
+    # Use provided project directory
+    project_dir = os.path.join(project_dir, project_name)
     
     os.makedirs(project_dir, exist_ok=True)
     logger.info(f"Project directory: {project_dir}")
@@ -339,7 +336,7 @@ def main():
     # start_project
     start_project_parser = subparsers.add_parser("start_project", help="Initialize a new project with CoT journaling")
     start_project_parser.add_argument("--project-name", required=True, help="Name of the project")
-    start_project_parser.add_argument("--project-dir", help="Directory to create the project in (optional)")
+    start_project_parser.add_argument("--project-dir", required=True, help="Directory to create the project in")
 
     # git_push
     git_push_parser = subparsers.add_parser("git_push", help="Analyze git status and create a commit message")
