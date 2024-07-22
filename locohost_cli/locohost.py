@@ -28,6 +28,7 @@ _cot_journal_cache = {}
 def _get_chain_of_thought_journal(context_dir):
     # Check if the journal for this context_dir is already cached
     if context_dir in _cot_journal_cache:
+        logger.debug(f"Using cached journal for context_dir: {context_dir}")
         return _cot_journal_cache[context_dir]
 
     # Create a separate logger for Chain of Thought entries
