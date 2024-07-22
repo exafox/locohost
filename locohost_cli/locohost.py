@@ -24,117 +24,26 @@ logger.debug(f"Anthropic client initialized: {client}")
 # Helper Functions
 # ========================
 
-def _create_cot(project_name, context, format='md', context_dir=None):
-    logger.debug(f"Creating CoT for project: {project_name}, format: {format}")
+def _register_chain_of_thought(project_name, content, format='md', context_dir=None):
     context_dir = _get_context_dir(project_name, context_dir)
-    logger.debug(f"Context directory: {context_dir}")
-
-    try:
+    if not os.path.exists(context_dir):
+        logger.debug(f"Context directory: {context_dir}")
         os.makedirs(context_dir, exist_ok=True)
         logger.debug(f"Created context directory: {context_dir}")
 
-        # Get the next available number for the CoT file
-        existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
-        next_number = len(existing_files) + 1
-        logger.debug(f"Next CoT number: {next_number}")
 
-        # Create the new CoT file
-        new_cot_file = os.path.join(context_dir, f'cot_{next_number:04d}.{format}')
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        logger.debug(f"New CoT file: {new_cot_file}")
+
+    with open(new_cot_file, 'w') as f:
+        f.write(content)
     
-        if format == 'md':
-            content = f"# Chain of Thought Entry {next_number}\n\n"
-            content += f"Created: {timestamp}\n\n"
-            content += f"Project: {project_name}\n\n"
-            content += "## Entry\n\n"
-            content += context
-        elif format == 'json':
-            content = json.dumps({
-                "entry_number": next_number,
-                "created": timestamp,
-                "project": project_name,
-                "content": context
-            }, indent=2)
-        else:
-            logger.error(f"Unsupported format: {format}")
-            return None
-
-        with open(new_cot_file, 'w') as f:
-            f.write(content)
-        
-        # Log the CoT entry using the chain_of_thought_logger
-        chain_of_thought_logger.info(f"New CoT Entry ({next_number}):\n{content}")
-        
-        logger.info(f"Created new CoT file: {new_cot_file}")
-        return new_cot_file
-    except IOError as e:
-        logger.error(f"Error creating CoT file: {e}")
-        logger.exception("Detailed error information:")
-        return None
-    except Exception as e:
-        logger.error(f"Unexpected error in _create_cot: {e}")
-        logger.exception("Detailed error information:")
-        return None
+    # Log the CoT entry using the chain_of_thought_logger
+    chain_of_thought_logger.info(f"New CoT Entry {content}")
+    
+def _create_cot(project_name, context, format='md', context_dir=None):
+    _register_chain_of_thought(project_name, context, format='md', context_dir=None)
 
 def _update_cot(project_name, context, format='md', context_dir=None):
-    logger.debug(f"Updating CoT for project: {project_name}, format: {format}")
-    context_dir = _get_context_dir(project_name, context_dir)
-    logger.debug(f"Context directory: {context_dir}")
-
-    if not os.path.exists(context_dir):
-        logger.error(f"Context directory does not exist: {context_dir}")
-        return _create_cot(project_name, context, format, context_dir)
-
-    existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
-    logger.debug(f"Existing CoT files: {existing_files}")
-    if not existing_files:
-        logger.error(f"No existing CoT files found for project: {project_name}")
-        return _create_cot(project_name, context, format, context_dir)
-
-    latest_file = max(existing_files)
-    cot_file = os.path.join(context_dir, latest_file)
-    logger.debug(f"Latest CoT file: {cot_file}")
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    try:
-        if format == 'md':
-            with open(cot_file, 'a') as f:
-                update_content = f"\n\n## Update: {timestamp}\n\n{context}"
-                f.write(update_content)
-            
-            # Log the CoT update using the chain_of_thought_logger
-            chain_of_thought_logger.info(f"CoT Update ({latest_file}):\n{update_content}")
-            
-            logger.info(f"Updated MD file with new content")
-        elif format == 'json':
-            with open(cot_file, 'r+') as f:
-                data = json.load(f)
-                update = {
-                    "timestamp": timestamp,
-                    "content": context
-                }
-                data['updates'] = data.get('updates', []) + [update]
-                f.seek(0)
-                json.dump(data, f, indent=2)
-                f.truncate()
-            
-            # Log the CoT update using the chain_of_thought_logger
-            chain_of_thought_logger.info(f"CoT Update ({latest_file}):\n{json.dumps(update, indent=2)}")
-            
-            logger.info(f"Updated JSON file with new content")
-        else:
-            logger.error(f"Unsupported format: {format}")
-            return
-
-        logger.info(f"Updated CoT file: {cot_file}")
-        return cot_file
-    except IOError as e:
-        logger.error(f"Error updating CoT file: {e}")
-        logger.exception("Detailed error information:")
-    except Exception as e:
-        logger.error(f"Unexpected error in _update_cot: {e}")
-        logger.exception("Detailed error information:")
+    _register_chain_of_thought(project_name, context, format='md', context_dir=None)
 
 import subprocess
 import anthropic
