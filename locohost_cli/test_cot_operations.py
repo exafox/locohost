@@ -108,13 +108,28 @@ def test_update_cot(project_setup):
 
 def test_compress_cot(project_setup):
     project_name, _, context_dir = project_setup
-    _update_cot(project_name, "Additional CoT entry", context_dir=context_dir)
+    
+    # Add true and untrue statements
+    _update_cot(project_name, "True statement: The Earth is an oblate spheroid.", context_dir=context_dir)
+    _update_cot(project_name, "Untrue statement: The Earth is flat.", context_dir=context_dir)
+    _update_cot(project_name, "True statement: Water is composed of hydrogen and oxygen.", context_dir=context_dir)
+    _update_cot(project_name, "Untrue statement: Water is a element.", context_dir=context_dir)
+    
     snapshot_file = _compress_cot(project_name, context_dir=context_dir)
     
     assert os.path.exists(snapshot_file)
     
     with open(snapshot_file, 'r') as f:
         content = f.read()
-    assert "Chain of Thought Entry" in content  # Check for the title
-    assert "Project initialized" in content  # From start_project
-    assert "Additional CoT entry" in content
+    
+    # Check for the title and initial entry
+    assert "Chain of Thought Entry" in content
+    assert "Project initialized" in content
+    
+    # Check that true statements are included
+    assert "The Earth is an oblate spheroid" in content
+    assert "Water is composed of hydrogen and oxygen" in content
+    
+    # Check that untrue statements are excluded
+    assert "The Earth is flat" not in content
+    assert "Water is a element" not in content
