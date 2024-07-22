@@ -67,23 +67,21 @@ def _get_chain_of_thought_journal(context_dir):
     return flushing_logger
 
     
-def _journal(project_name, content, format='md', context_dir=None):
-    context_dir = _get_context_dir(project_name, context_dir)
+def _journal(project_name, content, context_dir):
     journal = _get_chain_of_thought_journal(context_dir)
     journal.info(content)
     
-def _create_cot(project_name, context, format='md', context_dir=None):
-    _journal(project_name, context, format='md', context_dir=None)
+def _create_cot(project_name, context, context_dir):
+    _journal(project_name, context, context_dir)
 
-def _update_cot(project_name, context, format='md', context_dir=None):
-    _journal(project_name, context, format='md', context_dir=None)
+def _update_cot(project_name, context, context_dir):
+    _journal(project_name, context, context_dir)
 
 import subprocess
 import anthropic
 
-def _compress_cot(project_name, context_dir=None):
+def _compress_cot(project_name, context_dir):
     logger.debug(f"Compressing CoT for project: {project_name}")
-    context_dir = _get_context_dir(project_name, context_dir)
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
     logger.debug(f"Context directory: {context_dir}")
     logger.debug(f"Snapshot file: {snapshot_file}")
@@ -228,8 +226,8 @@ def start_project(project_name, project_dir):
     
     # Create initial CoT entry
     initial_context = f"Project '{project_name}' initialized on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    _create_cot(project_name, initial_context, context_dir=context_dir)
-    logger.info(f"HELOOOOOOOO Initial CoT entry created for project '{context_dir}'")
+    _create_cot(project_name, initial_context, context_dir)
+    logger.info(f"Initial CoT entry created for project '{context_dir}'")
     
     # Create basic project structure
     with open(os.path.join(project_dir, 'README.md'), 'w') as f:
@@ -461,12 +459,6 @@ def get_snapshot_data(context: str) -> dict:
         "commit_message": commit_message,
         "changelog": changelog
     }
-
-def _get_context_dir(project_name, context_dir=None):
-    if context_dir is None:
-        project_dir = os.getcwd()
-        context_dir = os.path.join(project_dir, '.context')
-    return context_dir
 
 if __name__ == "__main__":
     main()
