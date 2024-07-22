@@ -2,6 +2,7 @@ import argparse
 import logging
 import json
 import os
+import os
 from datetime import datetime
 from anthropic import Anthropic
 
@@ -25,7 +26,12 @@ def _get_chain_of_thought_journal(context_dir):
     chain_of_thought_logger = logging.getLogger('chain_of_thought')
     chain_of_thought_logger.setLevel(logging.INFO)
     cot_formatter = logging.Formatter('%(asctime)s - %(message)s')
-    cot_handler = logging.FileHandler(f'{context_dir}/chain_of_thought.log')
+    
+    # Ensure the context directory exists
+    os.makedirs(context_dir, exist_ok=True)
+    
+    log_file_path = os.path.join(context_dir, 'chain_of_thought.log')
+    cot_handler = logging.FileHandler(log_file_path)
     cot_handler.setFormatter(cot_formatter)
     chain_of_thought_logger.addHandler(cot_handler)
 
