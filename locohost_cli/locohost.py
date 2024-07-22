@@ -6,26 +6,27 @@ from datetime import datetime
 from anthropic import Anthropic
 import subprocess
 from datetime import datetime
+from session import Session
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-
 
 # Initialize the Anthropic client once at the module level
 client = Anthropic()
 logger.debug(f"Anthropic client initialized: {client}")
 
+# Initialize the Session
+session = Session()
+
 # ========================
 # Helper Functions
 # ========================
 
-
-
 # Cache for the chain of thought journal
 _cot_journal_cache = {}
 
-def _get_chain_of_thought_journal(context_dir):
+def _get_chain_of_thought_journal():
+    context_dir = session.get_context_dir()
     # Check if the journal for this context_dir is already cached
     if context_dir in _cot_journal_cache:
         logger.debug(f"Using cached journal for context_dir: {context_dir}")
@@ -67,20 +68,22 @@ def _get_chain_of_thought_journal(context_dir):
     return flushing_logger
 
     
-def _journal(project_name, content, context_dir):
-    journal = _get_chain_of_thought_journal(context_dir)
+def _journal(content):
+    journal = _get_chain_of_thought_journal()
     journal.info(content)
     
-def _create_cot(project_name, context, context_dir):
-    _journal(project_name, context, context_dir)
+def _create_cot(context):
+    _journal(context)
 
-def _update_cot(project_name, context, context_dir):
-    _journal(project_name, context, context_dir)
+def _update_cot(context):
+    _journal(context)
 
 import subprocess
 import anthropic
 
-def _compress_cot(project_name, context_dir):
+def _compress_cot():
+    project_name = session.get_project_name()
+    context_dir = session.get_context_dir()
     logger.debug(f"Compressing CoT for project: {project_name}")
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
     logger.debug(f"Context directory: {context_dir}")
@@ -212,38 +215,36 @@ def edit_prd(project_name, prd_file):
 def start_project(project_name, project_dir):
     logger.info(f"Starting new project: {project_name}")
     
-    # Use provided project directory
-    project_dir = os.path.join(project_dir, project_name)
+    session.set_project(project_name, project_dir)
     
-    os.makedirs(project_dir, exist_ok=True)
-    logger.info(f"Project directory: {project_dir}")
+    os.makedirs(session.get_project_dir(), exist_ok=True)
+    logger.info(f"Project directory: {session.get_project_dir()}")
     
     # Initialize git repository
-    subprocess.run(["git", "init"], cwd=project_dir, check=True)
+    subprocess.run(["git", "init"], cwd=session.get_project_dir(), check=True)
     
     # Create .context directory
-    context_dir = os.path.join(project_dir, '.context')
-    os.makedirs(context_dir, exist_ok=True)
+    os.makedirs(session.get_context_dir(), exist_ok=True)
     
     # Create initial CoT entry
     initial_context = f"Project '{project_name}' initialized on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    _create_cot(project_name, initial_context, context_dir)
-    logger.info(f"Initial CoT entry created for project '{context_dir}'")
+    _create_cot(initial_context)
+    logger.info(f"Initial CoT entry created for project '{session.get_context_dir()}'")
     
     # Create initial snapshot
-    snapshot_file = os.path.join(context_dir, 'snapshot.md')
+    snapshot_file = os.path.join(session.get_context_dir(), 'snapshot.md')
     with open(snapshot_file, 'w') as f:
         f.write(f"# {project_name} Snapshot\n\n{initial_context}\n")
     logger.info(f"Initial snapshot created at {snapshot_file}")
     
     # Create basic project structure
-    with open(os.path.join(project_dir, 'README.md'), 'w') as f:
+    with open(os.path.join(session.get_project_dir(), 'README.md'), 'w') as f:
         f.write(f"# {project_name}\n\nProject description goes here.")
     
-    with open(os.path.join(project_dir, '.gitignore'), 'w') as f:
+    with open(os.path.join(session.get_project_dir(), '.gitignore'), 'w') as f:
         f.write("# Python\n__pycache__/\n*.py[cod]\n\n# Virtual environment\nvenv/\n.env\n")
     
-    logger.info(f"Project '{project_name}' initialized successfully in {project_dir}")
+    logger.info(f"Project '{project_name}' initialized successfully in {session.get_project_dir()}")
 
 def git_push(project_name, commit_message):
     logger.info(f"[NO-OP] Executing git_push with project_name: {project_name}, commit_message: {commit_message}")
@@ -282,24 +283,23 @@ def generate_new_project_code(project_name, language):
     logger.info(f"[NO-OP] Executing generate_new_project_code with project_name: {project_name}, language: {language}")
     pass
 
-def edit_project_code(project_name, file_path):
-    logger.info(f"Executing edit_project_code with project_name: {project_name}, file_path: {file_path}")
+def edit_project_code(file_path):
+    logger.info(f"Executing edit_project_code with project_name: {session.get_project_name()}, file_path: {file_path}")
     
     # 1. Run compress_cot and create_prd
-    context_dir = os.path.join(os.getcwd(), project_name, '.context')
-    _compress_cot(project_name, context_dir)
-    create_prd(os.path.join(context_dir, 'project_context.txt'))
+    _compress_cot()
+    create_prd(os.path.join(session.get_context_dir(), 'project_context.txt'))
     
     # 2. Locate relevant files (stub)
-    def locate_relevant_files(project_name, file_path):
+    def locate_relevant_files(file_path):
         # This is a stub function. In a real implementation, this would use
         # project-specific logic to find related files.
         return [file_path]
     
-    relevant_files = locate_relevant_files(project_name, file_path)
+    relevant_files = locate_relevant_files(file_path)
     
     # 3. Use Claude to edit the code
-    snapshot_file = os.path.join(context_dir, 'snapshot.md')
+    snapshot_file = os.path.join(session.get_context_dir(), 'snapshot.md')
     
     with open(snapshot_file, 'r') as f:
         snapshot_content = f.read()
@@ -308,7 +308,7 @@ def edit_project_code(project_name, file_path):
         with open(file, 'r') as f:
             file_content = f.read()
         
-        prompt = f"""Human: I need to edit the following code file for the project {project_name}. 
+        prompt = f"""Human: I need to edit the following code file for the project {session.get_project_name()}. 
         Here's the current project context:
         
         {snapshot_content}
@@ -395,11 +395,11 @@ def edit_project_code(project_name, file_path):
         subprocess.run(["git", "commit", "-m", commit_message], cwd=os.path.dirname(file), check=True)
         
         # Update the changelog
-        changelog_file = os.path.join(context_dir, 'CHANGELOG.md')
+        changelog_file = os.path.join(session.get_context_dir(), 'CHANGELOG.md')
         with open(changelog_file, 'a') as f:
             f.write(f"\n\n## {datetime.now().strftime('%Y-%m-%d')}\n{changelog}\n")
     
-    logger.info(f"Code editing completed for project: {project_name}")
+    logger.info(f"Code editing completed for project: {session.get_project_name()}")
 
 def generate_tests_for_diff(project_name, diff_file):
     logger.info(f"[NO-OP] Executing generate_tests_for_diff with project_name: {project_name}, diff_file: {diff_file}")
@@ -453,96 +453,84 @@ def main():
 
     # git_push
     git_push_parser = subparsers.add_parser("git_push", help="Analyze git status and create a commit message")
-    git_push_parser.add_argument("--project-name", required=True, help="Name of the project")
     git_push_parser.add_argument("--commit-message", required=True, help="Commit message")
 
     # run_tests
     run_tests_parser = subparsers.add_parser("run_tests", help="Analyze test results for the project")
-    run_tests_parser.add_argument("--project-name", required=True, help="Name of the project")
 
     # deploy
     deploy_parser = subparsers.add_parser("deploy", help="Analyze deployment information for the project")
-    deploy_parser.add_argument("--project-name", required=True, help="Name of the project")
 
     # generate_new_project_code
     generate_new_project_code_parser = subparsers.add_parser("generate_new_project_code", help="Generate initial code for a new project based on requirements")
-    generate_new_project_code_parser.add_argument("--project-name", required=True, help="Name of the project")
     generate_new_project_code_parser.add_argument("--language", required=True, choices=["Python", "Go", "TypeScript"], help="Programming language to use")
 
     # edit_project_code
     edit_project_code_parser = subparsers.add_parser("edit_project_code", help="Edit existing project code with AI assistance")
-    edit_project_code_parser.add_argument("--project-name", required=True, help="Name of the project")
     edit_project_code_parser.add_argument("--file-path", required=True, help="Path to the file to edit")
 
     # generate_tests_for_diff
     generate_tests_for_diff_parser = subparsers.add_parser("generate_tests_for_diff", help="Generate tests for a specific diff using Aider")
-    generate_tests_for_diff_parser.add_argument("--project-name", required=True, help="Name of the project")
     generate_tests_for_diff_parser.add_argument("--diff-file", required=True, help="Path to the diff file")
 
     # review_and_refactor
     review_and_refactor_parser = subparsers.add_parser("review_and_refactor", help="Improve code quality while maintaining existing functionality")
-    review_and_refactor_parser.add_argument("--project-name", required=True, help="Name of the project")
 
     # generate_performance_tests
     generate_performance_tests_parser = subparsers.add_parser("generate_performance_tests", help="Create tests to measure and ensure application performance")
-    generate_performance_tests_parser.add_argument("--project-name", required=True, help="Name of the project")
 
     # upgrade_dependencies
     upgrade_dependencies_parser = subparsers.add_parser("upgrade_dependencies", help="Safely update project dependencies to their latest compatible versions")
-    upgrade_dependencies_parser.add_argument("--project-name", required=True, help="Name of the project")
 
     # bootstrap_database_migrations
     bootstrap_database_migrations_parser = subparsers.add_parser("bootstrap_database_migrations", help="Set up and manage database schema changes for PostgreSQL")
-    bootstrap_database_migrations_parser.add_argument("--project-name", required=True, help="Name of the project")
 
     # generate_docs_snapshot
     generate_docs_snapshot_parser = subparsers.add_parser("generate_docs_snapshot", help="Automatically create or update project documentation")
-    generate_docs_snapshot_parser.add_argument("--project-name", required=True, help="Name of the project")
 
     # generate_or_update_local_deployment
     generate_or_update_local_deployment_parser = subparsers.add_parser("generate_or_update_local_deployment", help="Configure or update the local development environment")
-    generate_or_update_local_deployment_parser.add_argument("--project-name", required=True, help="Name of the project")
 
     # generate_or_update_production_deployment
     generate_or_update_production_deployment_parser = subparsers.add_parser("generate_or_update_production_deployment", help="Prepare or update Kubernetes configurations for production deployment")
-    generate_or_update_production_deployment_parser.add_argument("--project-name", required=True, help="Name of the project")
 
     args = parser.parse_args()
 
     if args.action == "create_prd":
         create_prd(args.project_context_file)
     elif args.action == "edit_prd":
-        edit_prd(args.project_name, args.prd_file)
+        session.set_project(args.project_name, os.getcwd())
+        edit_prd(args.prd_file)
     elif args.action == "start_project":
         start_project(args.project_name, args.project_dir)
     elif args.action == "git_push":
-        git_push(args.project_name, args.commit_message)
+        git_push(args.commit_message)
     elif args.action == "run_tests":
-        run_tests(args.project_name)
-        print(f"Test report generated for project: {args.project_name}")
+        run_tests()
+        print(f"Test report generated for project: {session.get_project_name()}")
         print("You can find the HTML report in the 'test_reports' directory of your project.")
     elif args.action == "deploy":
-        deploy(args.project_name)
+        deploy()
     elif args.action == "generate_new_project_code":
-        generate_new_project_code(args.project_name, args.language)
+        generate_new_project_code(args.language)
     elif args.action == "edit_project_code":
-        edit_project_code(args.project_name, args.file_path)
+        edit_project_code(args.file_path)
     elif args.action == "generate_tests_for_diff":
-        generate_tests_for_diff(args.project_name, args.diff_file)
+        generate_tests_for_diff(args.diff_file)
     elif args.action == "review_and_refactor":
-        review_and_refactor(args.project_name)
+        review_and_refactor()
     elif args.action == "generate_performance_tests":
-        generate_performance_tests(args.project_name)
+        generate_performance_tests()
     elif args.action == "upgrade_dependencies":
-        upgrade_dependencies(args.project_name)
+        upgrade_dependencies()
     elif args.action == "bootstrap_database_migrations":
-        bootstrap_database_migrations(args.project_name)
+        bootstrap_database_migrations()
     elif args.action == "generate_docs_snapshot":
-        generate_docs_snapshot(args.project_name)
+        generate_docs_snapshot()
     elif args.action == "generate_or_update_local_deployment":
-        generate_or_update_local_deployment(args.project_name)
+        generate_or_update_local_deployment()
     elif args.action == "generate_or_update_production_deployment":
-        generate_or_update_production_deployment(args.project_name)
+        generate_or_update_production_deployment()
 
 def get_snapshot_data(context: str) -> dict:
     prompt = f"""Human: Generate snapshot data based on this context: {context}
