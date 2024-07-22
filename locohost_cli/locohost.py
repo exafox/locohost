@@ -22,15 +22,12 @@ session = Session()
 # Helper Functions
 # ========================
 
-# Cache for the chain of thought journal
-_cot_journal_cache = {}
-
 def _get_chain_of_thought_journal():
     context_dir = session.get_context_dir()
     # Check if the journal for this context_dir is already cached
-    if context_dir in _cot_journal_cache:
+    if context_dir in session._cot_journal_cache:
         logger.debug(f"Using cached journal for context_dir: {context_dir}")
-        return _cot_journal_cache[context_dir]
+        return session._cot_journal_cache[context_dir]
 
     # Create a separate logger for Chain of Thought entries
     chain_of_thought_logger = logging.getLogger(f'chain_of_thought_{context_dir}')
@@ -63,7 +60,7 @@ def _get_chain_of_thought_journal():
     flushing_logger = FlushingLogger(chain_of_thought_logger, cot_handler)
     
     # Cache the logger
-    _cot_journal_cache[context_dir] = flushing_logger
+    session._cot_journal_cache[context_dir] = flushing_logger
 
     return flushing_logger
 

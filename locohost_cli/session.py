@@ -9,6 +9,7 @@ class Session:
             cls._instance.project_name = None
             cls._instance.project_dir = None
             cls._instance.context_dir = None
+            cls._instance._cot_journal_cache = {}
         return cls._instance
 
     def set_project(self, project_name, project_dir):
