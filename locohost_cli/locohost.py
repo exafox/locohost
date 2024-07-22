@@ -227,6 +227,7 @@ def start_project(project_name, project_dir):
     # Create initial CoT entry
     initial_context = f"Project '{project_name}' initialized on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     _create_cot(project_name, initial_context, context_dir=context_dir)
+    logger.info(f"Initial CoT entry created for project '{project_name}'")
     
     # Create basic project structure
     with open(os.path.join(project_dir, 'README.md'), 'w') as f:
