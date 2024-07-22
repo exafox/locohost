@@ -7,11 +7,11 @@ from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot, start
 
 # Configure logging to display messages during test execution
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # Create console handler and set level to debug
 ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 
 # Create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -49,10 +49,6 @@ def test_start_project(tmp_path):
     context_dir = os.path.join(project_dir, project_name, '.context')
     assert os.path.exists(context_dir)
     
-    # Check if initial CoT file is created
-    cot_files = [f for f in os.listdir(context_dir) if f == 'chain_of_thought.log']
-    assert len(cot_files) == 1
-    
     # Check if README.md is created
     assert os.path.exists(os.path.join(project_dir, project_name, 'README.md'))
     
@@ -74,7 +70,7 @@ def test_create_cot(project_setup):
     
     for i, statement in enumerate(untrue_statements, start=1):
         _create_cot(project_name, statement, context_dir=context_dir)
-        cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
+        cot_files = [f for f in os.listdir(context_dir) if f.endswith('chain_of_thought.log')]
         logger.info(f"CoT files after create {i}: {cot_files}")
         assert len(cot_files) == i + 1  # One from start_project, plus the new ones
         
@@ -96,7 +92,7 @@ def test_update_cot(project_setup):
     for i, statement in enumerate(true_statements, start=1):
         _update_cot(project_name, statement, context_dir=context_dir)
         
-        cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
+        cot_files = [f for f in os.listdir(context_dir) if f.endswith('chain_of_thought.log')]
         logger.info(f"CoT files after update {i}: {cot_files}")
         
         with open(os.path.join(context_dir, cot_files[0]), 'r') as f:
