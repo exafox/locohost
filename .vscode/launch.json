@@ -14,7 +14,8 @@
             "cwd": "${workspaceFolder}",
             "env": {},
             "console": "integratedTerminal",
-            "python": "/home/stefan/.pyenv/shims/python"
+            "python": "/home/stefan/.pyenv/shims/python",
+            "preLaunchTask": "Remove report.html"
         }
     ]
 }
