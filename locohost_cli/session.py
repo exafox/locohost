@@ -23,11 +23,8 @@ class Session:
         self.project_name = project_name
         self.project_dir = os.path.join(project_dir, project_name)
         self.context_dir = os.path.join(self.project_dir, '.context')
-        if os.path.exists(self.project_dir):
-            self._scan_project_files()
-            self._initialize_query_engine()
-        else:
-            logger.warning(f"Project directory {self.project_dir} does not exist. Skipping file scan and query engine initialization.")
+        self._scan_project_files()
+        self._initialize_query_engine()
 
     def _scan_project_files(self):
         reader = SimpleDirectoryReader(input_dir=self.project_dir, recursive=True)

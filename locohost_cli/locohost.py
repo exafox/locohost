@@ -225,7 +225,12 @@ def start_project(project_name, project_dir):
     os.makedirs(full_project_dir, exist_ok=True)
     logger.info(f"Project directory: {full_project_dir}")
     
-    session.set_project(project_name, project_dir)
+    # Create basic project structure
+    with open(os.path.join(full_project_dir, 'README.md'), 'w') as f:
+        f.write(f"# {project_name}\n\nProject description goes here.")
+    
+    with open(os.path.join(full_project_dir, '.gitignore'), 'w') as f:
+        f.write("# Python\n__pycache__/\n*.py[cod]\n\n# Virtual environment\nvenv/\n.env\n")
     
     # Initialize git repository
     subprocess.run(["git", "init"], cwd=full_project_dir, check=True)
@@ -245,12 +250,8 @@ def start_project(project_name, project_dir):
         f.write(f"# {project_name} Snapshot\n\n{initial_context}\n")
     logger.info(f"Initial snapshot created at {snapshot_file}")
     
-    # Create basic project structure
-    with open(os.path.join(full_project_dir, 'README.md'), 'w') as f:
-        f.write(f"# {project_name}\n\nProject description goes here.")
-    
-    with open(os.path.join(full_project_dir, '.gitignore'), 'w') as f:
-        f.write("# Python\n__pycache__/\n*.py[cod]\n\n# Virtual environment\nvenv/\n.env\n")
+    # Set up the session after creating files
+    session.set_project(project_name, project_dir)
     
     logger.info(f"Project '{project_name}' initialized successfully in {full_project_dir}")
 
