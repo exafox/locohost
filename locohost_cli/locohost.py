@@ -221,36 +221,38 @@ def edit_prd(project_name, prd_file):
 def start_project(project_name, project_dir):
     logger.info(f"Starting new project: {project_name}")
     
+    full_project_dir = os.path.join(project_dir, project_name)
+    os.makedirs(full_project_dir, exist_ok=True)
+    logger.info(f"Project directory: {full_project_dir}")
+    
     session.set_project(project_name, project_dir)
     
-    os.makedirs(session.get_project_dir(), exist_ok=True)
-    logger.info(f"Project directory: {session.get_project_dir()}")
-    
     # Initialize git repository
-    subprocess.run(["git", "init"], cwd=session.get_project_dir(), check=True)
+    subprocess.run(["git", "init"], cwd=full_project_dir, check=True)
     
     # Create .context directory
-    os.makedirs(session.get_context_dir(), exist_ok=True)
+    context_dir = os.path.join(full_project_dir, '.context')
+    os.makedirs(context_dir, exist_ok=True)
     
     # Create initial CoT entry
     initial_context = f"Project '{project_name}' initialized on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     _create_cot(initial_context)
-    logger.info(f"Initial CoT entry created for project '{session.get_context_dir()}'")
+    logger.info(f"Initial CoT entry created for project '{context_dir}'")
     
     # Create initial snapshot
-    snapshot_file = os.path.join(session.get_context_dir(), 'snapshot.md')
+    snapshot_file = os.path.join(context_dir, 'snapshot.md')
     with open(snapshot_file, 'w') as f:
         f.write(f"# {project_name} Snapshot\n\n{initial_context}\n")
     logger.info(f"Initial snapshot created at {snapshot_file}")
     
     # Create basic project structure
-    with open(os.path.join(session.get_project_dir(), 'README.md'), 'w') as f:
+    with open(os.path.join(full_project_dir, 'README.md'), 'w') as f:
         f.write(f"# {project_name}\n\nProject description goes here.")
     
-    with open(os.path.join(session.get_project_dir(), '.gitignore'), 'w') as f:
+    with open(os.path.join(full_project_dir, '.gitignore'), 'w') as f:
         f.write("# Python\n__pycache__/\n*.py[cod]\n\n# Virtual environment\nvenv/\n.env\n")
     
-    logger.info(f"Project '{project_name}' initialized successfully in {session.get_project_dir()}")
+    logger.info(f"Project '{project_name}' initialized successfully in {full_project_dir}")
 
 def git_push(project_name, commit_message):
     logger.info(f"[NO-OP] Executing git_push with project_name: {project_name}, commit_message: {commit_message}")
