@@ -431,6 +431,10 @@ def generate_or_update_production_deployment(project_name):
     pass
 
 def main():
+    # Run this code at the beginning of main()
+    print("Starting locohost.py")
+    logger.info("locohost.py execution started")
+
     parser = argparse.ArgumentParser(description="AI-assisted project management and development tool for Kubernetes-based applications")
     parser.add_argument("--project-dir", help="Directory of the project", default=os.getcwd())
     subparsers = parser.add_subparsers(dest="action", help="Action to perform")
