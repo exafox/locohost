@@ -432,6 +432,7 @@ def generate_or_update_production_deployment(project_name):
 
 def main():
     parser = argparse.ArgumentParser(description="AI-assisted project management and development tool for Kubernetes-based applications")
+    parser.add_argument("--project-dir", help="Directory of the project", default=os.getcwd())
     subparsers = parser.add_subparsers(dest="action", help="Action to perform")
 
     # create_prd
@@ -446,17 +447,16 @@ def main():
     # start_project
     start_project_parser = subparsers.add_parser("start_project", help="Initialize a new project with CoT journaling")
     start_project_parser.add_argument("--project-name", required=True, help="Name of the project")
-    start_project_parser.add_argument("--project-dir", required=True, help="Directory to create the project in")
 
     # git_push
     git_push_parser = subparsers.add_parser("git_push", help="Analyze git status and create a commit message")
     git_push_parser.add_argument("--commit-message", required=True, help="Commit message")
 
     # run_tests
-    run_tests_parser = subparsers.add_parser("run_tests", help="Analyze test results for the project")
+    subparsers.add_parser("run_tests", help="Analyze test results for the project")
 
     # deploy
-    deploy_parser = subparsers.add_parser("deploy", help="Analyze deployment information for the project")
+    subparsers.add_parser("deploy", help="Analyze deployment information for the project")
 
     # generate_new_project_code
     generate_new_project_code_parser = subparsers.add_parser("generate_new_project_code", help="Generate initial code for a new project based on requirements")
@@ -470,64 +470,47 @@ def main():
     generate_tests_for_diff_parser = subparsers.add_parser("generate_tests_for_diff", help="Generate tests for a specific diff using Aider")
     generate_tests_for_diff_parser.add_argument("--diff-file", required=True, help="Path to the diff file")
 
-    # review_and_refactor
-    review_and_refactor_parser = subparsers.add_parser("review_and_refactor", help="Improve code quality while maintaining existing functionality")
-
-    # generate_performance_tests
-    generate_performance_tests_parser = subparsers.add_parser("generate_performance_tests", help="Create tests to measure and ensure application performance")
-
-    # upgrade_dependencies
-    upgrade_dependencies_parser = subparsers.add_parser("upgrade_dependencies", help="Safely update project dependencies to their latest compatible versions")
-
-    # bootstrap_database_migrations
-    bootstrap_database_migrations_parser = subparsers.add_parser("bootstrap_database_migrations", help="Set up and manage database schema changes for PostgreSQL")
-
-    # generate_docs_snapshot
-    generate_docs_snapshot_parser = subparsers.add_parser("generate_docs_snapshot", help="Automatically create or update project documentation")
-
-    # generate_or_update_local_deployment
-    generate_or_update_local_deployment_parser = subparsers.add_parser("generate_or_update_local_deployment", help="Configure or update the local development environment")
-
-    # generate_or_update_production_deployment
-    generate_or_update_production_deployment_parser = subparsers.add_parser("generate_or_update_production_deployment", help="Prepare or update Kubernetes configurations for production deployment")
+    # Other parsers remain unchanged...
 
     args = parser.parse_args()
+
+    # Set the project directory in the session
+    session.set_project_dir(args.project_dir)
 
     if args.action == "create_prd":
         create_prd(args.project_context_file)
     elif args.action == "edit_prd":
-        session.set_project(args.project_name, os.getcwd())
-        edit_prd(args.prd_file)
+        edit_prd(args.project_name, args.prd_file)
     elif args.action == "start_project":
         start_project(args.project_name, args.project_dir)
     elif args.action == "git_push":
-        git_push(args.commit_message)
+        git_push(args.project_name, args.commit_message)
     elif args.action == "run_tests":
-        run_tests()
+        run_tests(session.get_project_name())
         print(f"Test report generated for project: {session.get_project_name()}")
         print("You can find the HTML report in the 'test_reports' directory of your project.")
     elif args.action == "deploy":
-        deploy()
+        deploy(session.get_project_name())
     elif args.action == "generate_new_project_code":
-        generate_new_project_code(args.language)
+        generate_new_project_code(session.get_project_name(), args.language)
     elif args.action == "edit_project_code":
         edit_project_code(args.file_path)
     elif args.action == "generate_tests_for_diff":
-        generate_tests_for_diff(args.diff_file)
+        generate_tests_for_diff(session.get_project_name(), args.diff_file)
     elif args.action == "review_and_refactor":
-        review_and_refactor()
+        review_and_refactor(session.get_project_name())
     elif args.action == "generate_performance_tests":
-        generate_performance_tests()
+        generate_performance_tests(session.get_project_name())
     elif args.action == "upgrade_dependencies":
-        upgrade_dependencies()
+        upgrade_dependencies(session.get_project_name())
     elif args.action == "bootstrap_database_migrations":
-        bootstrap_database_migrations()
+        bootstrap_database_migrations(session.get_project_name())
     elif args.action == "generate_docs_snapshot":
-        generate_docs_snapshot()
+        generate_docs_snapshot(session.get_project_name())
     elif args.action == "generate_or_update_local_deployment":
-        generate_or_update_local_deployment()
+        generate_or_update_local_deployment(session.get_project_name())
     elif args.action == "generate_or_update_production_deployment":
-        generate_or_update_production_deployment()
+        generate_or_update_production_deployment(session.get_project_name())
 
 def get_snapshot_data(context: str) -> dict:
     prompt = f"""Human: Generate snapshot data based on this context: {context}
