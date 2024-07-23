@@ -46,7 +46,7 @@ def _get_chain_of_thought_journal():
         context_dir = session.get_context_dir()
     except ValueError:
         logger.error("Context directory not set. Make sure a project is initialized.")
-        return None
+        return _get_fallback_logger()
 
     # Check if the journal for this context_dir is already cached
     if context_dir in session._cot_journal_cache:
@@ -58,35 +58,52 @@ def _get_chain_of_thought_journal():
     chain_of_thought_logger.setLevel(logging.INFO)
     cot_formatter = logging.Formatter('%(asctime)s - %(message)s')
     
-
     # Ensure the context directory exists
     os.makedirs(context_dir, exist_ok=True)
     
+    try:
+        commit_position = int(subprocess.run(['git', 'rev-list', '--count', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip())
+    except subprocess.CalledProcessError:
+        logger.warning("Failed to get git commit count. Using fallback value.")
+        commit_position = 0
 
-    commit_position = int(subprocess.run(['git', 'rev-list', '--count', 'HEAD'], capture_output=True, text=True).stdout.strip())
     iso_time = datetime.now().isoformat(timespec='seconds')
     log_file_path = os.path.join(context_dir, f'{commit_position}_{iso_time}_chain_of_thought.log')
     logger.info(f"Creating Chain of Thought log file: {log_file_path}")
-    cot_handler = logging.FileHandler(log_file_path)
-    cot_handler.setFormatter(cot_formatter)
-    chain_of_thought_logger.addHandler(cot_handler)
-
-    # Create a custom logger that flushes after each write
-    class FlushingLogger:
-        def __init__(self, logger, handler):
-            self.logger = logger
-            self.handler = handler
-
-        def info(self, message):
-            self.logger.info(message)
-            self.handler.flush()
-
-    flushing_logger = FlushingLogger(chain_of_thought_logger, cot_handler)
     
-    # Cache the logger
-    session._cot_journal_cache[context_dir] = flushing_logger
+    try:
+        cot_handler = logging.FileHandler(log_file_path)
+        cot_handler.setFormatter(cot_formatter)
+        chain_of_thought_logger.addHandler(cot_handler)
 
-    return session._cot_journal_cache[context_dir]
+        # Create a custom logger that flushes after each write
+        class FlushingLogger:
+            def __init__(self, logger, handler):
+                self.logger = logger
+                self.handler = handler
+
+            def info(self, message):
+                self.logger.info(message)
+                self.handler.flush()
+
+        flushing_logger = FlushingLogger(chain_of_thought_logger, cot_handler)
+        
+        # Cache the logger
+        session._cot_journal_cache[context_dir] = flushing_logger
+
+        return flushing_logger
+    except IOError as e:
+        logger.error(f"Failed to create log file: {e}")
+        return _get_fallback_logger()
+
+def _get_fallback_logger():
+    fallback_logger = logging.getLogger('fallback_chain_of_thought')
+    if not fallback_logger.handlers:
+        fallback_logger.setLevel(logging.INFO)
+        fallback_handler = logging.StreamHandler()
+        fallback_handler.setFormatter(logging.Formatter('%(asctime)s - FALLBACK - %(message)s'))
+        fallback_logger.addHandler(fallback_handler)
+    return fallback_logger
 
     
 def _journal(content):
