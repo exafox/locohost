@@ -1,6 +1,9 @@
 import os
+import logging
 from llama_index import SimpleDirectoryReader, VectorStoreIndex, StorageContext
 from llama_index.vector_stores.simple import SimpleVectorStore
+
+logger = logging.getLogger(__name__)
 
 class Session:
     _instance = None
