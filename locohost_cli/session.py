@@ -2,6 +2,7 @@ import os
 
 class Session:
     _instance = None
+    _project_dir = None
 
     def __new__(cls):
         if cls._instance is None:
