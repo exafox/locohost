@@ -2,3 +2,5 @@ anthropic
 pydantic
 instructor
 pytest
+pytest-html
+llama-index

@@ -3,15 +3,15 @@ import os
 import logging
 import sys
 import subprocess
-from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot
+from locohost_cli.locohost import _create_cot, _update_cot, _compress_cot, start_project, Session, _journal
 
 # Configure logging to display messages during test execution
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # Create console handler and set level to debug
 ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 
 # Create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -26,51 +26,134 @@ logger.addHandler(ch)
 def project_setup(tmp_path):
     project_name = "test_project"
     project_dir = tmp_path
-    context_dir = project_dir / '.context'
-    context_dir.mkdir(parents=True, exist_ok=True)
     
-    # Initialize git repository
-    import subprocess
-    subprocess.run(["git", "init"], cwd=str(project_dir), check=True)
+    logger.info(f"Setting up project: {project_name}")
+    logger.info(f"Project directory: {project_dir}")
     
-    yield project_name, str(project_dir), str(context_dir)
+    # Use start_project to initialize the project
+    start_project(project_name, str(project_dir))
     
+    context_dir = project_dir / project_name / '.context'
+    logger.info(f"Context directory: {context_dir}")
+    
+    yield project_name, str(project_dir / project_name), str(context_dir)
+    
+    logger.info(f"Tearing down project: {project_name}")
     # Clean up is handled automatically by pytest's tmp_path fixture
 
-def test_create_cot(project_setup):
-    project_name, _, context_dir = project_setup
-    _create_cot(project_name, "Initial CoT entry", context_dir=context_dir)
-    cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
-    assert len(cot_files) == 1
+def test_start_project(tmp_path):
+    project_name = "new_test_project"
+    project_dir = tmp_path
     
-    with open(os.path.join(context_dir, cot_files[0]), 'r') as f:
-        content = f.read()
-    assert "Initial CoT entry" in content
-    assert "# Chain of Thought Entry 1" in content
-    assert f"Project: {project_name}" in content
+    start_project(project_name, str(project_dir))
+    
+    # Check if project directory is created
+    assert os.path.exists(os.path.join(project_dir, project_name))
+    
+    # Check if .context directory is created
+    context_dir = os.path.join(project_dir, project_name, '.context')
+    assert os.path.exists(context_dir)
+    
+    # Check if README.md is created
+    assert os.path.exists(os.path.join(project_dir, project_name, 'README.md'))
+    
+    # Check if .gitignore is created
+    assert os.path.exists(os.path.join(project_dir, project_name, '.gitignore'))
+    
+    # Check if git repository is initialized
+    assert os.path.exists(os.path.join(project_dir, project_name, '.git'))
+
+def test_create_cot(project_setup):
+    project_name, project_dir, context_dir = project_setup
+    session = Session()
+    session.set_project(project_name, os.path.dirname(project_dir))
+    
+    # Test with three untrue statements
+    untrue_statements = [
+        "The Earth is flat and supported by four elephants standing on a giant turtle.",
+        "Chocolate is a vegetable that grows underground like potatoes.",
+        "All cats are actually tiny aliens in disguise, monitoring human behavior."
+    ]
+    
+    for i, statement in enumerate(untrue_statements, start=1):
+        _journal(statement)
+        cot_files = [f for f in os.listdir(context_dir) if f.endswith('chain_of_thought.log')]
+        logger.info(f"CoT files after create {i}: {cot_files}")
+        assert len(cot_files) == 1  # One from start_project, plus the new ones
+        
+        with open(os.path.join(context_dir, cot_files[-1]), 'r') as f:
+            content = f.read()
+        assert statement in content
+
 
 def test_update_cot(project_setup):
-    project_name, _, context_dir = project_setup
-    _create_cot(project_name, "Initial CoT entry", context_dir=context_dir)
-    _update_cot(project_name, "Updated CoT entry", context_dir=context_dir)
+    project_name, project_dir, context_dir = project_setup
+    session = Session()
+    session.set_project(project_name, os.path.dirname(project_dir))
     
-    cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
-    assert len(cot_files) == 1
+    # Test with three true statements that refute the untrue statements
+    true_statements = [
+        "The Earth is an oblate spheroid, orbiting the Sun in our solar system.",
+        "Chocolate is derived from cacao beans, which grow on trees in tropical regions.",
+        "Cats are domesticated mammals of the species Felis catus, not extraterrestrial beings."
+    ]
     
-    with open(os.path.join(context_dir, cot_files[0]), 'r') as f:
-        content = f.read()
-    assert "Initial CoT entry" in content, f"Content: {content}"
-    assert "Updated CoT entry" in content, f"Content: {content}"
+    for i, statement in enumerate(true_statements, start=1):
+        _journal('Update: ' + statement)
+        
+        cot_files = [f for f in os.listdir(context_dir) if f.endswith('chain_of_thought.log')]
+        logger.info(f"CoT files after update {i}: {cot_files}")
+        
+        with open(os.path.join(context_dir, cot_files[0]), 'r') as f:
+            content = f.read()
+        assert statement in content
+        assert content.count("Update:") == i, f"Expected {i} updates, found {content.count('Update:')}"
 
 def test_compress_cot(project_setup):
-    project_name, _, context_dir = project_setup
-    _create_cot(project_name, "Initial CoT entry", context_dir=context_dir)
-    _update_cot(project_name, "Updated CoT entry", context_dir=context_dir)
-    snapshot_file = _compress_cot(project_name, context_dir=context_dir)
+    project_name, project_dir, context_dir = project_setup
+    session = Session()
+    session.set_project(project_name, os.path.dirname(project_dir))
+    
+    logger.info(f"Starting test_compress_cot for project: {project_name}")
+    logger.info(f"Context directory: {context_dir}")
+    
+    # Add untrue statements
+    untrue_statements = [
+        "The Earth is flat.",
+        "The Sun revolves around the Earth.",
+        "Humans only use 10% of their brains."
+    ]
+    for statement in untrue_statements:
+        _journal(f"Untrue: {statement}")
+    
+    # Add true counterfactuals
+    true_statements = [
+        "The Earth is an oblate spheroid.",
+        "The Earth revolves around the Sun.",
+        "Humans use their entire brain, though not all at once."
+    ]
+    for statement in true_statements:
+        _journal(f"True: {statement}")
+    
+    # Log the contents of the context directory
+    logger.info(f"Contents of context directory before compression:")
+    for file in os.listdir(context_dir):
+        logger.info(f"- {file}")
+    
+    snapshot_file = _compress_cot()
     
     assert os.path.exists(snapshot_file)
+    logger.info(f"Snapshot file created: {snapshot_file}")
     
     with open(snapshot_file, 'r') as f:
         content = f.read()
-    assert "Initial CoT entry" in content
-    assert "Updated CoT entry" in content
+    
+    logger.info(f"Snapshot content:\n{content}")
+    
+    # Check that true statements are included
+    for statement in true_statements:
+        assert statement in content, f"True statement not found in snapshot: {statement}"
+    
+    # Check that untrue statements are excluded
+    for statement in untrue_statements:
+        assert statement not in content, f"Untrue statement found in snapshot: {statement}"

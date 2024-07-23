@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: All Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "locohost_cli/test_cot_operations.py",
+                "locohost_cli/test_performance.py",
+                "--html=report.html",
+                "--self-contained-html"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "console": "integratedTerminal",
+            "python": "/home/stefan/.pyenv/shims/python",
+            "preLaunchTask": "Remove report.html"
+        }
+    ]
+}

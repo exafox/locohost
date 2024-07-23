@@ -4,7 +4,11 @@ import json
 import os
 from datetime import datetime
 from anthropic import Anthropic
+import subprocess
+from datetime import datetime
+from locohost_cli.session import Session
 
+# Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -12,108 +16,113 @@ logger = logging.getLogger(__name__)
 client = Anthropic()
 logger.debug(f"Anthropic client initialized: {client}")
 
+# Initialize the Session
+session = Session()
+
+# Ensure logger is not None
+if logger is None:
+    print("Warning: logger is None. Initializing a new logger.")
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(handler)
+
+def search_project(query):
+    try:
+        result = session.search(query)
+        logger.info(f"Search result for query '{query}': {result}")
+        return result
+    except ValueError as e:
+        logger.error(f"Error searching project: {e}")
+        return None
+
 # ========================
 # Helper Functions
 # ========================
 
-def _create_cot(project_name, context, format='md', context_dir=None):
-    logger.debug(f"Creating CoT for project: {project_name}, format: {format}")
-    context_dir = _get_context_dir(project_name, context_dir)
-    logger.debug(f"Context directory: {context_dir}")
+def _get_chain_of_thought_journal():
+    try:
+        context_dir = session.get_context_dir()
+    except ValueError:
+        logger.error("Context directory not set. Make sure a project is initialized.")
+        return _get_fallback_logger()
 
+    # Check if the journal for this context_dir is already cached
+    if context_dir in session._cot_journal_cache:
+        logger.debug(f"Using cached journal for context_dir: {context_dir}")
+        return session._cot_journal_cache[context_dir]
+
+    # Create a separate logger for Chain of Thought entries
+    chain_of_thought_logger = logging.getLogger(f'chain_of_thought_{context_dir}')
+    chain_of_thought_logger.setLevel(logging.INFO)
+    cot_formatter = logging.Formatter('%(asctime)s - %(message)s')
+    
+    # Ensure the context directory exists
     os.makedirs(context_dir, exist_ok=True)
-    logger.debug(f"Created context directory: {context_dir}")
-
-    # Get the next available number for the CoT file
-    existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
-    next_number = len(existing_files) + 1
-    logger.debug(f"Next CoT number: {next_number}")
-
-    # Create the new CoT file
-    new_cot_file = os.path.join(context_dir, f'cot_{next_number:04d}.{format}')
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    logger.debug(f"New CoT file: {new_cot_file}")
     
     try:
-        if format == 'md':
-            content = f"# Chain of Thought Entry {next_number}\n\n"
-            content += f"Created: {timestamp}\n\n"
-            content += f"Project: {project_name}\n\n"
-            content += "## Entry\n\n"
-            content += context
-        elif format == 'json':
-            content = json.dumps({
-                "entry_number": next_number,
-                "created": timestamp,
-                "project": project_name,
-                "content": context
-            }, indent=2)
-        else:
-            logger.error(f"Unsupported format: {format}")
-            return
+        commit_position = int(subprocess.run(['git', 'rev-list', '--count', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip())
+    except subprocess.CalledProcessError:
+        logger.warning("Failed to get git commit count. Using fallback value.")
+        commit_position = 0
 
-        with open(new_cot_file, 'w') as f:
-            f.write(content)
-        logger.info(f"Created new CoT file: {new_cot_file}")
-        logger.info(f"CoT content: {content}")  # Log full content
-    except IOError as e:
-        logger.error(f"Error creating CoT file: {e}")
-        logger.exception("Detailed error information:")
-
-def _update_cot(project_name, context, format='md', context_dir=None):
-    logger.debug(f"Updating CoT for project: {project_name}, format: {format}")
-    context_dir = _get_context_dir(project_name, context_dir)
-    logger.debug(f"Context directory: {context_dir}")
-
-    if not os.path.exists(context_dir):
-        logger.error(f"Context directory does not exist: {context_dir}")
-        _create_cot(project_name, context, format, context_dir)
-        return
-
-    existing_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith(f'.{format}')]
-    logger.debug(f"Existing CoT files: {existing_files}")
-    if not existing_files:
-        logger.error(f"No existing CoT files found for project: {project_name}")
-        return
-
-    latest_file = max(existing_files)
-    cot_file = os.path.join(context_dir, latest_file)
-    logger.debug(f"Latest CoT file: {cot_file}")
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+    iso_time = datetime.now().isoformat(timespec='seconds')
+    log_file_path = os.path.join(context_dir, f'{commit_position}_{iso_time}_chain_of_thought.log')
+    logger.info(f"Creating Chain of Thought log file: {log_file_path}")
+    
     try:
-        if format == 'md':
-            with open(cot_file, 'a') as f:
-                update_content = f"\n\n## Update: {timestamp}\n\n{context}"
-                f.write(update_content)
-            logger.info(f"Updated MD file with new content: {update_content}")
-        elif format == 'json':
-            with open(cot_file, 'r+') as f:
-                data = json.load(f)
-                update = {
-                    "timestamp": timestamp,
-                    "content": context
-                }
-                data['updates'] = data.get('updates', []) + [update]
-                f.seek(0)
-                json.dump(data, f, indent=2)
-                f.truncate()
-            logger.info(f"Updated JSON file with new content: {update}")
-        else:
-            logger.error(f"Unsupported format: {format}")
-            return
+        cot_handler = logging.FileHandler(log_file_path)
+        cot_handler.setFormatter(cot_formatter)
+        chain_of_thought_logger.addHandler(cot_handler)
 
-        logger.info(f"Updated CoT file: {cot_file}")
+        # Create a custom logger that flushes after each write
+        class FlushingLogger:
+            def __init__(self, logger, handler):
+                self.logger = logger
+                self.handler = handler
+
+            def info(self, message):
+                self.logger.info(message)
+                self.handler.flush()
+
+        flushing_logger = FlushingLogger(chain_of_thought_logger, cot_handler)
+        
+        # Cache the logger
+        session._cot_journal_cache[context_dir] = flushing_logger
+
+        return flushing_logger
     except IOError as e:
-        logger.error(f"Error updating CoT file: {e}")
-        logger.exception("Detailed error information:")
+        logger.error(f"Failed to create log file: {e}")
+        return _get_fallback_logger()
+
+def _get_fallback_logger():
+    fallback_logger = logging.getLogger('fallback_chain_of_thought')
+    if not fallback_logger.handlers:
+        fallback_logger.setLevel(logging.INFO)
+        fallback_handler = logging.StreamHandler()
+        fallback_handler.setFormatter(logging.Formatter('%(asctime)s - FALLBACK - %(message)s'))
+        fallback_logger.addHandler(fallback_handler)
+    return fallback_logger
+
+    
+def _journal(content):
+    journal = _get_chain_of_thought_journal()
+    journal.info(content)
+    
+def _create_cot(context):
+    _journal(context)
+
+def _update_cot(context):
+    _journal(context)
 
 import subprocess
 import anthropic
 
-def _compress_cot(project_name, context_dir=None):
+def _compress_cot():
+    project_name = session.get_project_name()
+    context_dir = session.get_context_dir()
     logger.debug(f"Compressing CoT for project: {project_name}")
-    context_dir = _get_context_dir(project_name, context_dir)
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
     logger.debug(f"Context directory: {context_dir}")
     logger.debug(f"Snapshot file: {snapshot_file}")
@@ -132,17 +141,20 @@ def _compress_cot(project_name, context_dir=None):
         logger.debug("No existing snapshot file found")
 
     # 2. Read all CoT files
-    cot_files = [f for f in os.listdir(context_dir) if f.startswith('cot_') and f.endswith('.md')]
+    cot_files = [f for f in os.listdir(context_dir) if f.endswith('chain_of_thought.log')]
     cot_content = ""
     for cot_file in cot_files:
         with open(os.path.join(context_dir, cot_file), 'r') as f:
             cot_content += f.read() + "\n\n"
     logger.debug(f"CoT content length: {len(cot_content)} characters")
+    logger.debug(f"CoT files found: {cot_files}")
 
     # 3. Send data to Anthropic for compression and commit message generation
     prompt = f"""Human: Please compress the following Chain of Thought (CoT) information. 
     Preserve all important information, especially the content of the CoT entries.
     You may reorganize and summarize the information, but do not remove any significant details.
+    
+    Important: If there are any untrue statements in the CoT content, they should be removed or corrected in the compressed result. Only include factual and correct information in the final snapshot.
     
     Current snapshot:
     {current_snapshot}
@@ -150,17 +162,17 @@ def _compress_cot(project_name, context_dir=None):
     CoT content:
     {cot_content}
     
-    Provide the compressed result in Markdown format, which should include all CoT entries in a summarized form.
+    Provide the compressed result in Markdown format, which should include all CoT entries in a summarized form, excluding any untrue statements.
     
-    After compressing the content, please generate a concise and informative commit message that summarizes the key updates or changes made in this compression.
+    After compressing the content, please generate a concise and informative commit message that summarizes the key updates or changes made in this compression, including any corrections of untrue statements.
     
     Format your response as follows:
     [COMPRESSED_CONTENT]
-    (Your compressed content here)
+    (Your compressed content here, with untrue statements removed or corrected)
     [/COMPRESSED_CONTENT]
     
     [COMMIT_MESSAGE]
-    (Your commit message here)
+    (Your commit message here, mentioning any corrections made)
     [/COMMIT_MESSAGE]
 
     Assistant:
@@ -238,17 +250,85 @@ def edit_prd(project_name, prd_file):
     logger.info(f"[NO-OP] Executing edit_prd with project_name: {project_name}, prd_file: {prd_file}")
     pass
 
-def start_project(project_name):
-    logger.info(f"[NO-OP] Executing start_project with project_name: {project_name}")
-    pass
+def start_project(project_name, project_dir):
+    if logger:
+        logger.info(f"Starting new project: {project_name}")
+    else:
+        print(f"Starting new project: {project_name}")
+    
+    full_project_dir = os.path.join(project_dir, project_name)
+    os.makedirs(full_project_dir, exist_ok=True)
+    if logger:
+        logger.info(f"Project directory: {full_project_dir}")
+    else:
+        print(f"Project directory: {full_project_dir}")
+    
+    # Create basic project structure
+    with open(os.path.join(full_project_dir, 'README.md'), 'w') as f:
+        f.write(f"# {project_name}\n\nProject description goes here.")
+    
+    with open(os.path.join(full_project_dir, '.gitignore'), 'w') as f:
+        f.write("# Python\n__pycache__/\n*.py[cod]\n\n# Virtual environment\nvenv/\n.env\n")
+    
+    # Initialize git repository
+    subprocess.run(["git", "init"], cwd=full_project_dir, check=True)
+    
+    # Create .context directory
+    context_dir = os.path.join(full_project_dir, '.context')
+    os.makedirs(context_dir, exist_ok=True)
+    
+    # Create initial CoT entry
+    initial_context = f"Project '{project_name}' initialized on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    _create_cot(initial_context)
+    if logger:
+        logger.info(f"Initial CoT entry created for project '{context_dir}'")
+    else:
+        print(f"Initial CoT entry created for project '{context_dir}'")
+    
+    # Create initial snapshot
+    snapshot_file = os.path.join(context_dir, 'snapshot.md')
+    with open(snapshot_file, 'w') as f:
+        f.write(f"# {project_name} Snapshot\n\n{initial_context}\n")
+    if logger:
+        logger.info(f"Initial snapshot created at {snapshot_file}")
+    else:
+        print(f"Initial snapshot created at {snapshot_file}")
+    
+    # Set up the session after creating files
+    session.set_project(project_name, project_dir)
+    
+    if logger:
+        logger.info(f"Project '{project_name}' initialized successfully in {full_project_dir}")
+    else:
+        print(f"Project '{project_name}' initialized successfully in {full_project_dir}")
 
 def git_push(project_name, commit_message):
     logger.info(f"[NO-OP] Executing git_push with project_name: {project_name}, commit_message: {commit_message}")
     pass
 
 def run_tests(project_name):
-    logger.info(f"[NO-OP] Executing run_tests with project_name: {project_name}")
-    pass
+    logger.info(f"Executing run_tests for project: {project_name}")
+    project_dir = os.path.join(os.getcwd(), project_name)
+    test_dir = os.path.join(project_dir, 'tests')
+    report_dir = os.path.join(project_dir, 'test_reports')
+    
+    os.makedirs(report_dir, exist_ok=True)
+    
+    report_file = os.path.join(report_dir, 'test_report.html')
+    
+    pytest_command = [
+        "pytest",
+        test_dir,
+        f"--html={report_file}",
+        "--self-contained-html"
+    ]
+    
+    try:
+        subprocess.run(pytest_command, check=True)
+        logger.info(f"Tests completed. HTML report generated at: {report_file}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Tests failed with exit code {e.returncode}")
+        logger.error(f"HTML report generated at: {report_file}")
 
 def deploy(project_name):
     logger.info(f"[NO-OP] Executing deploy with project_name: {project_name}")
@@ -259,9 +339,123 @@ def generate_new_project_code(project_name, language):
     logger.info(f"[NO-OP] Executing generate_new_project_code with project_name: {project_name}, language: {language}")
     pass
 
-def edit_project_code(project_name, file_path):
-    logger.info(f"[NO-OP] Executing edit_project_code with project_name: {project_name}, file_path: {file_path}")
-    pass
+def edit_project_code(file_path):
+    logger.info(f"Executing edit_project_code with project_name: {session.get_project_name()}, file_path: {file_path}")
+    
+    # 1. Run compress_cot and create_prd
+    _compress_cot()
+    create_prd(os.path.join(session.get_context_dir(), 'project_context.txt'))
+    
+    # 2. Locate relevant files (stub)
+    def locate_relevant_files(file_path):
+        # This is a stub function. In a real implementation, this would use
+        # project-specific logic to find related files.
+        return [file_path]
+    
+    relevant_files = locate_relevant_files(file_path)
+    
+    # 3. Use Claude to edit the code
+    snapshot_file = os.path.join(session.get_context_dir(), 'snapshot.md')
+    
+    with open(snapshot_file, 'r') as f:
+        snapshot_content = f.read()
+    
+    for file in relevant_files:
+        with open(file, 'r') as f:
+            file_content = f.read()
+        
+        prompt = f"""Human: I need to edit the following code file for the project {session.get_project_name()}. 
+        Here's the current project context:
+        
+        {snapshot_content}
+        
+        And here's the content of the file to edit:
+        
+        {file_content}
+        
+        Please suggest improvements or changes to this code based on the project context and best practices.
+
+        Assistant: Certainly! I'll review the code and suggest improvements based on the project context and best practices. Here are my suggestions:
+
+        [Provide detailed suggestions for improvements or changes]
+
+        Human: Great, please provide the updated code incorporating these changes.
+
+        Assistant: Certainly! Here's the updated code incorporating the suggested changes:
+
+        [UPDATED_CODE]
+        {file_content}  # This will be replaced with the actual updated code
+        [/UPDATED_CODE]
+
+        Human: Thank you. Now, please provide a brief summary of the changes made and their rationale.
+
+        Assistant: Certainly! Here's a summary of the changes made and their rationale:
+
+        [CHANGE_SUMMARY]
+        1. [Change 1]: [Rationale]
+        2. [Change 2]: [Rationale]
+        ...
+        [/CHANGE_SUMMARY]
+
+        Human: Thank you for the summary. Please provide this information in the following format:
+        [FILE_TEXT]
+        (Updated file content)
+        [/FILE_TEXT]
+        
+        [COMMIT_MESSAGE]
+        (A concise commit message summarizing the changes)
+        [/COMMIT_MESSAGE]
+        
+        [CHANGELOG]
+        (A more detailed changelog entry)
+        [/CHANGELOG]
+
+        Assistant: Certainly! Here's the information in the requested format:
+
+        [FILE_TEXT]
+        {file_content}  # This will be replaced with the actual updated code
+        [/FILE_TEXT]
+        
+        [COMMIT_MESSAGE]
+        Updated {os.path.basename(file)}: [Brief summary of changes]
+        [/COMMIT_MESSAGE]
+        
+        [CHANGELOG]
+        - [Detailed change 1]
+        - [Detailed change 2]
+        ...
+        [/CHANGELOG]
+        """
+        
+        response = client.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=3000,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        response_content = response.content[0].text
+        
+        # Extract updated file content, commit message, and changelog
+        updated_content = response_content.split("[FILE_TEXT]")[1].split("[/FILE_TEXT]")[0].strip()
+        commit_message = response_content.split("[COMMIT_MESSAGE]")[1].split("[/COMMIT_MESSAGE]")[0].strip()
+        changelog = response_content.split("[CHANGELOG]")[1].split("[/CHANGELOG]")[0].strip()
+        
+        # Write the updated content back to the file
+        with open(file, 'w') as f:
+            f.write(updated_content)
+        
+        # Commit the changes
+        subprocess.run(["git", "add", file], cwd=os.path.dirname(file), check=True)
+        subprocess.run(["git", "commit", "-m", commit_message], cwd=os.path.dirname(file), check=True)
+        
+        # Update the changelog
+        changelog_file = os.path.join(session.get_context_dir(), 'CHANGELOG.md')
+        with open(changelog_file, 'a') as f:
+            f.write(f"\n\n## {datetime.now().strftime('%Y-%m-%d')}\n{changelog}\n")
+    
+    logger.info(f"Code editing completed for project: {session.get_project_name()}")
 
 def generate_tests_for_diff(project_name, diff_file):
     logger.info(f"[NO-OP] Executing generate_tests_for_diff with project_name: {project_name}, diff_file: {diff_file}")
@@ -296,7 +490,12 @@ def generate_or_update_production_deployment(project_name):
     pass
 
 def main():
+    # Run this code at the beginning of main()
+    print("Starting locohost.py")
+    logger.info("locohost.py execution started")
+
     parser = argparse.ArgumentParser(description="AI-assisted project management and development tool for Kubernetes-based applications")
+    parser.add_argument("--project-dir", help="Directory of the project", default=os.getcwd())
     subparsers = parser.add_subparsers(dest="action", help="Action to perform")
 
     # create_prd
@@ -314,94 +513,77 @@ def main():
 
     # git_push
     git_push_parser = subparsers.add_parser("git_push", help="Analyze git status and create a commit message")
-    git_push_parser.add_argument("--project-name", required=True, help="Name of the project")
     git_push_parser.add_argument("--commit-message", required=True, help="Commit message")
 
     # run_tests
-    run_tests_parser = subparsers.add_parser("run_tests", help="Analyze test results for the project")
-    run_tests_parser.add_argument("--project-name", required=True, help="Name of the project")
+    subparsers.add_parser("run_tests", help="Analyze test results for the project")
 
     # deploy
-    deploy_parser = subparsers.add_parser("deploy", help="Analyze deployment information for the project")
-    deploy_parser.add_argument("--project-name", required=True, help="Name of the project")
+    subparsers.add_parser("deploy", help="Analyze deployment information for the project")
 
     # generate_new_project_code
     generate_new_project_code_parser = subparsers.add_parser("generate_new_project_code", help="Generate initial code for a new project based on requirements")
-    generate_new_project_code_parser.add_argument("--project-name", required=True, help="Name of the project")
     generate_new_project_code_parser.add_argument("--language", required=True, choices=["Python", "Go", "TypeScript"], help="Programming language to use")
 
     # edit_project_code
     edit_project_code_parser = subparsers.add_parser("edit_project_code", help="Edit existing project code with AI assistance")
-    edit_project_code_parser.add_argument("--project-name", required=True, help="Name of the project")
     edit_project_code_parser.add_argument("--file-path", required=True, help="Path to the file to edit")
 
     # generate_tests_for_diff
     generate_tests_for_diff_parser = subparsers.add_parser("generate_tests_for_diff", help="Generate tests for a specific diff using Aider")
-    generate_tests_for_diff_parser.add_argument("--project-name", required=True, help="Name of the project")
     generate_tests_for_diff_parser.add_argument("--diff-file", required=True, help="Path to the diff file")
 
-    # review_and_refactor
-    review_and_refactor_parser = subparsers.add_parser("review_and_refactor", help="Improve code quality while maintaining existing functionality")
-    review_and_refactor_parser.add_argument("--project-name", required=True, help="Name of the project")
+    # Other parsers remain unchanged...
 
-    # generate_performance_tests
-    generate_performance_tests_parser = subparsers.add_parser("generate_performance_tests", help="Create tests to measure and ensure application performance")
-    generate_performance_tests_parser.add_argument("--project-name", required=True, help="Name of the project")
-
-    # upgrade_dependencies
-    upgrade_dependencies_parser = subparsers.add_parser("upgrade_dependencies", help="Safely update project dependencies to their latest compatible versions")
-    upgrade_dependencies_parser.add_argument("--project-name", required=True, help="Name of the project")
-
-    # bootstrap_database_migrations
-    bootstrap_database_migrations_parser = subparsers.add_parser("bootstrap_database_migrations", help="Set up and manage database schema changes for PostgreSQL")
-    bootstrap_database_migrations_parser.add_argument("--project-name", required=True, help="Name of the project")
-
-    # generate_docs_snapshot
-    generate_docs_snapshot_parser = subparsers.add_parser("generate_docs_snapshot", help="Automatically create or update project documentation")
-    generate_docs_snapshot_parser.add_argument("--project-name", required=True, help="Name of the project")
-
-    # generate_or_update_local_deployment
-    generate_or_update_local_deployment_parser = subparsers.add_parser("generate_or_update_local_deployment", help="Configure or update the local development environment")
-    generate_or_update_local_deployment_parser.add_argument("--project-name", required=True, help="Name of the project")
-
-    # generate_or_update_production_deployment
-    generate_or_update_production_deployment_parser = subparsers.add_parser("generate_or_update_production_deployment", help="Prepare or update Kubernetes configurations for production deployment")
-    generate_or_update_production_deployment_parser.add_argument("--project-name", required=True, help="Name of the project")
+    # Add search subparser
+    search_parser = subparsers.add_parser("search", help="Search the project files")
+    search_parser.add_argument("--query", required=True, help="Search query")
 
     args = parser.parse_args()
+
+    # Set the project directory in the session
+    session.set_project_dir(args.project_dir)
 
     if args.action == "create_prd":
         create_prd(args.project_context_file)
     elif args.action == "edit_prd":
         edit_prd(args.project_name, args.prd_file)
     elif args.action == "start_project":
-        start_project(args.project_name)
+        start_project(args.project_name, args.project_dir)
     elif args.action == "git_push":
         git_push(args.project_name, args.commit_message)
     elif args.action == "run_tests":
-        run_tests(args.project_name)
+        run_tests(session.get_project_name())
+        print(f"Test report generated for project: {session.get_project_name()}")
+        print("You can find the HTML report in the 'test_reports' directory of your project.")
     elif args.action == "deploy":
-        deploy(args.project_name)
+        deploy(session.get_project_name())
     elif args.action == "generate_new_project_code":
-        generate_new_project_code(args.project_name, args.language)
+        generate_new_project_code(session.get_project_name(), args.language)
     elif args.action == "edit_project_code":
-        edit_project_code(args.project_name, args.file_path)
+        edit_project_code(args.file_path)
     elif args.action == "generate_tests_for_diff":
-        generate_tests_for_diff(args.project_name, args.diff_file)
+        generate_tests_for_diff(session.get_project_name(), args.diff_file)
     elif args.action == "review_and_refactor":
-        review_and_refactor(args.project_name)
+        review_and_refactor(session.get_project_name())
     elif args.action == "generate_performance_tests":
-        generate_performance_tests(args.project_name)
+        generate_performance_tests(session.get_project_name())
     elif args.action == "upgrade_dependencies":
-        upgrade_dependencies(args.project_name)
+        upgrade_dependencies(session.get_project_name())
     elif args.action == "bootstrap_database_migrations":
-        bootstrap_database_migrations(args.project_name)
+        bootstrap_database_migrations(session.get_project_name())
     elif args.action == "generate_docs_snapshot":
-        generate_docs_snapshot(args.project_name)
+        generate_docs_snapshot(session.get_project_name())
     elif args.action == "generate_or_update_local_deployment":
-        generate_or_update_local_deployment(args.project_name)
+        generate_or_update_local_deployment(session.get_project_name())
     elif args.action == "generate_or_update_production_deployment":
-        generate_or_update_production_deployment(args.project_name)
+        generate_or_update_production_deployment(session.get_project_name())
+    elif args.action == "search":
+        result = search_project(args.query)
+        if result:
+            print(f"Search result: {result}")
+        else:
+            print("No results found or an error occurred.")
 
 def get_snapshot_data(context: str) -> dict:
     prompt = f"""Human: Generate snapshot data based on this context: {context}
@@ -440,12 +622,6 @@ def get_snapshot_data(context: str) -> dict:
         "commit_message": commit_message,
         "changelog": changelog
     }
-
-def _get_context_dir(project_name, context_dir=None):
-    if context_dir is None:
-        project_dir = os.getcwd()
-        context_dir = os.path.join(project_dir, '.context')
-    return context_dir
 
 if __name__ == "__main__":
     main()

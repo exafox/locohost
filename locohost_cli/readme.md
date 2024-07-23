@@ -7,6 +7,7 @@ Locohost CLI is an AI-assisted project management and development tool for Kuber
 To install Locohost CLI, run:
 
 ```
+pip install -r requirements.txt
 pip install -e .
 ```
 
@@ -16,17 +17,17 @@ To run the tests for Locohost CLI, follow these steps:
 
 1. Ensure you have pytest installed. If not, install it using:
    ```
-   pip install pytest
+   pip install pytest pytest-html
    ```
 
 2. Navigate to the root directory of the project.
 
 3. Run the tests using pytest:
    ```
-   pytest locohost_cli/test_cot_operations.py
+   pytest locohost_cli/test_cot_operations.py locohost_cli/test_performance.py --html=report.html --self-contained-html
    ```
 
-This will run all the tests in the `test_cot_operations.py` file.
+This will run all the tests in both `test_cot_operations.py` and `test_performance.py` files and generate an HTML report.
 
 ## Usage
 
@@ -41,6 +42,15 @@ For a list of available actions and options, run:
 ```
 python -m locohost_cli --help
 ```
+
+## Features
+
+- Chain of Thought (CoT) journaling
+- Project initialization and management
+- Code editing with AI assistance
+- Test generation and execution
+- Performance testing
+- Search functionality within project files
 
 ## Contributing
 
