@@ -5,7 +5,7 @@ import sys
 import time
 from tempfile import TemporaryDirectory
 from locohost_cli.locohost import Session, search_project
-from locohost_cli.session import SimpleDirectoryReader, VectorStoreIndex
+from llama_index import SimpleDirectoryReader, VectorStoreIndex
 
 # Configure logging
 logger = logging.getLogger(__name__)
