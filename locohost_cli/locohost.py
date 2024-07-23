@@ -86,7 +86,7 @@ def _get_chain_of_thought_journal():
     # Cache the logger
     session._cot_journal_cache[context_dir] = flushing_logger
 
-    return flushing_logger
+    return session._cot_journal_cache[context_dir]
 
     
 def _journal(content):
