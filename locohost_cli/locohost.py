@@ -485,6 +485,10 @@ def main():
 
     # Other parsers remain unchanged...
 
+    # Add search subparser
+    search_parser = subparsers.add_parser("search", help="Search the project files")
+    search_parser.add_argument("--query", required=True, help="Search query")
+
     args = parser.parse_args()
 
     # Set the project directory in the session
@@ -524,6 +528,12 @@ def main():
         generate_or_update_local_deployment(session.get_project_name())
     elif args.action == "generate_or_update_production_deployment":
         generate_or_update_production_deployment(session.get_project_name())
+    elif args.action == "search":
+        result = search_project(args.query)
+        if result:
+            print(f"Search result: {result}")
+        else:
+            print("No results found or an error occurred.")
 
 def get_snapshot_data(context: str) -> dict:
     prompt = f"""Human: Generate snapshot data based on this context: {context}
