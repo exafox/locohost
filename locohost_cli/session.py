@@ -1,7 +1,9 @@
 import os
 import logging
-from llama_index import SimpleDirectoryReader, VectorStoreIndex, StorageContext
+from llama_index import SimpleDirectoryReader, VectorStoreIndex, StorageContext, ServiceContext
 from llama_index.vector_stores.simple import SimpleVectorStore
+from llama_index.llms import Anthropic
+from llama_index.embeddings import HuggingFaceEmbeddings
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +62,22 @@ class Session:
 
         reader = SimpleDirectoryReader(input_files=self.project_files)
         documents = reader.load_data()
+        
+        # Initialize Anthropic LLM
+        llm = Anthropic(model="claude-2")
+        
+        # Use HuggingFace embeddings instead of OpenAI
+        embed_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        
+        # Create a custom ServiceContext
+        service_context = ServiceContext.from_defaults(llm=llm, embed_model=embed_model)
+        
         storage_context = StorageContext.from_defaults(vector_store=SimpleVectorStore())
-        index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
+        index = VectorStoreIndex.from_documents(
+            documents, 
+            storage_context=storage_context,
+            service_context=service_context
+        )
         self.query_engine = index.as_query_engine()
 
     def search(self, query):
