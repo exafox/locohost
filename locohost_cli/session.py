@@ -26,3 +26,9 @@ class Session:
 
     def get_project_name(self):
         return self.project_name
+
+    def set_project_dir(self, project_dir):
+        self._project_dir = project_dir
+
+    def get_project_dir(self):
+        return self._project_dir
