@@ -8,6 +8,7 @@ import subprocess
 from datetime import datetime
 from locohost_cli.session import Session
 
+# Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,15 @@ logger.debug(f"Anthropic client initialized: {client}")
 
 # Initialize the Session
 session = Session()
+
+# Ensure logger is not None
+if logger is None:
+    print("Warning: logger is None. Initializing a new logger.")
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(handler)
 
 def search_project(query):
     try:
@@ -224,11 +234,17 @@ def edit_prd(project_name, prd_file):
     pass
 
 def start_project(project_name, project_dir):
-    logger.info(f"Starting new project: {project_name}")
+    if logger:
+        logger.info(f"Starting new project: {project_name}")
+    else:
+        print(f"Starting new project: {project_name}")
     
     full_project_dir = os.path.join(project_dir, project_name)
     os.makedirs(full_project_dir, exist_ok=True)
-    logger.info(f"Project directory: {full_project_dir}")
+    if logger:
+        logger.info(f"Project directory: {full_project_dir}")
+    else:
+        print(f"Project directory: {full_project_dir}")
     
     # Create basic project structure
     with open(os.path.join(full_project_dir, 'README.md'), 'w') as f:
@@ -247,18 +263,27 @@ def start_project(project_name, project_dir):
     # Create initial CoT entry
     initial_context = f"Project '{project_name}' initialized on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     _create_cot(initial_context)
-    logger.info(f"Initial CoT entry created for project '{context_dir}'")
+    if logger:
+        logger.info(f"Initial CoT entry created for project '{context_dir}'")
+    else:
+        print(f"Initial CoT entry created for project '{context_dir}'")
     
     # Create initial snapshot
     snapshot_file = os.path.join(context_dir, 'snapshot.md')
     with open(snapshot_file, 'w') as f:
         f.write(f"# {project_name} Snapshot\n\n{initial_context}\n")
-    logger.info(f"Initial snapshot created at {snapshot_file}")
+    if logger:
+        logger.info(f"Initial snapshot created at {snapshot_file}")
+    else:
+        print(f"Initial snapshot created at {snapshot_file}")
     
     # Set up the session after creating files
     session.set_project(project_name, project_dir)
     
-    logger.info(f"Project '{project_name}' initialized successfully in {full_project_dir}")
+    if logger:
+        logger.info(f"Project '{project_name}' initialized successfully in {full_project_dir}")
+    else:
+        print(f"Project '{project_name}' initialized successfully in {full_project_dir}")
 
 def git_push(project_name, commit_message):
     logger.info(f"[NO-OP] Executing git_push with project_name: {project_name}, commit_message: {commit_message}")
