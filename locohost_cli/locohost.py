@@ -18,6 +18,15 @@ logger.debug(f"Anthropic client initialized: {client}")
 # Initialize the Session
 session = Session()
 
+def search_project(query):
+    try:
+        result = session.search(query)
+        logger.info(f"Search result for query '{query}': {result}")
+        return result
+    except ValueError as e:
+        logger.error(f"Error searching project: {e}")
+        return None
+
 # ========================
 # Helper Functions
 # ========================
