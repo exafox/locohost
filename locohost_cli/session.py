@@ -1,4 +1,5 @@
 import os
+from llama_index.core import SimpleDirectoryReader
 
 class Session:
     _instance = None
@@ -39,10 +40,9 @@ class Session:
         return self._project_dir
 
     def _scan_project_files(self):
-        self.project_files = []
-        for root, dirs, files in os.walk(self.project_dir):
-            for file in files:
-                self.project_files.append(os.path.join(root, file))
+        reader = SimpleDirectoryReader(input_dir=self.project_dir, recursive=True)
+        documents = reader.load_data()
+        self.project_files = [doc.metadata['file_path'] for doc in documents]
 
     def get_project_files(self):
         if not self.project_files:
