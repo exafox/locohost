@@ -1,6 +1,5 @@
 import os
-from llama_index import SimpleDirectoryReader, VectorStoreIndex
-from llama_index.core.storage import StorageContext
+from llama_index import SimpleDirectoryReader, VectorStoreIndex, StorageContext
 from llama_index.vector_stores.simple import SimpleVectorStore
 
 class Session:
