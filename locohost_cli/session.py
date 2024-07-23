@@ -6,7 +6,15 @@ from llama_index.vector_stores.simple import SimpleVectorStore
 logger = logging.getLogger(__name__)
 
 class Session:
-    def __init__(self):
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(Session, cls).__new__(cls)
+            cls._instance._initialize()
+        return cls._instance
+
+    def _initialize(self):
         self.project_name = None
         self.project_dir = None
         self.context_dir = None
@@ -23,10 +31,18 @@ class Session:
         self._initialize_query_engine()
 
     def set_project_dir(self, project_dir):
-        self.project_dir = project_dir
+        if self.project_name:
+            self.project_dir = os.path.join(project_dir, self.project_name)
+        else:
+            self.project_dir = project_dir
+        self._scan_project_files()
+        self._initialize_query_engine()
 
     def get_project_name(self):
         return self.project_name
+
+    def get_project_dir(self):
+        return self.project_dir
 
     def _scan_project_files(self):
         if not os.path.exists(self.project_dir):
