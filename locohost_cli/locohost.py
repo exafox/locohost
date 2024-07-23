@@ -32,7 +32,12 @@ def search_project(query):
 # ========================
 
 def _get_chain_of_thought_journal():
-    context_dir = session.get_context_dir()
+    try:
+        context_dir = session.get_context_dir()
+    except ValueError:
+        logger.error("Context directory not set. Make sure a project is initialized.")
+        return None
+
     # Check if the journal for this context_dir is already cached
     if context_dir in session._cot_journal_cache:
         logger.debug(f"Using cached journal for context_dir: {context_dir}")
@@ -51,7 +56,7 @@ def _get_chain_of_thought_journal():
     commit_position = int(subprocess.run(['git', 'rev-list', '--count', 'HEAD'], capture_output=True, text=True).stdout.strip())
     iso_time = datetime.now().isoformat(timespec='seconds')
     log_file_path = os.path.join(context_dir, f'{commit_position}_{iso_time}_chain_of_thought.log')
-    logger.info(f"HELOOOOO Creating Chain of Thought log file: {log_file_path}")
+    logger.info(f"Creating Chain of Thought log file: {log_file_path}")
     cot_handler = logging.FileHandler(log_file_path)
     cot_handler.setFormatter(cot_formatter)
     chain_of_thought_logger.addHandler(cot_handler)

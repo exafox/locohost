@@ -42,3 +42,8 @@ class Session:
         if self.query_engine is None:
             raise ValueError("Query engine not initialized. Set a project first.")
         return self.query_engine.query(query)
+
+    def get_context_dir(self):
+        if self.context_dir is None:
+            raise ValueError("Context directory not set. Set a project first.")
+        return self.context_dir
